@@ -1,6 +1,17 @@
 import { supabase } from "./supabaseClient.js";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000/api";
+const DEFAULT_API_URL = (() => {
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:4000/api";
+    }
+  }
+
+  return "https://siteforge-ai-o8ca.onrender.com/api";
+})();
+
+const API_URL = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
 
 async function authHeaders() {
   const {

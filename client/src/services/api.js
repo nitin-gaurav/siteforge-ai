@@ -11,7 +11,33 @@ const DEFAULT_API_URL = (() => {
   return "https://siteforge-ai-o8ca.onrender.com/api";
 })();
 
-const API_URL = import.meta.env.VITE_API_URL || DEFAULT_API_URL;
+function normalizeApiBaseUrl(rawUrl) {
+  if (!rawUrl) return rawUrl;
+  const trimmed = String(rawUrl).trim().replace(/\/+$/, "");
+
+  try {
+    const url = new URL(trimmed);
+    if (url.hostname.endsWith(".onrenderer.com")) {
+      url.hostname = url.hostname.replace(/\.onrenderer\.com$/i, ".onrender.com");
+    }
+
+    url.hash = "";
+    url.search = "";
+
+    const pathname = url.pathname.replace(/\/+$/, "");
+    if (!pathname.endsWith("/api")) {
+      url.pathname = `${pathname || ""}/api`;
+    }
+
+    return url.toString().replace(/\/+$/, "");
+  } catch {
+    const fixedHost = trimmed.replace(/\.onrenderer\.com\b/gi, ".onrender.com");
+    const noTrailingSlash = fixedHost.replace(/\/+$/, "");
+    return noTrailingSlash.endsWith("/api") ? noTrailingSlash : `${noTrailingSlash}/api`;
+  }
+}
+
+const API_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL || DEFAULT_API_URL);
 
 async function authHeaders() {
   const {

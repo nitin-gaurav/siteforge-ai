@@ -17,20 +17,30 @@ const defaultAllowedOrigins = [
   "https://siteforgeapp.vercel.app"
 ];
 
+const configuredAllowedOrigins = [
+  process.env.CLIENT_URL,
+  process.env.FRONTEND_URL
+]
+  .filter(Boolean)
+  .join(",");
+
 const allowedOrigins = new Set(
-  (process.env.CLIENT_URL || defaultAllowedOrigins.join(","))
+  [defaultAllowedOrigins.join(","), configuredAllowedOrigins]
+    .filter(Boolean)
+    .join(",")
     .split(",")
-    .map((origin) => origin.trim())
+    .map((origin) => origin.trim().replace(/\/+$/, ""))
     .filter(Boolean)
 );
 
 function isAllowedOrigin(origin) {
   if (!origin) return true;
-  if (allowedOrigins.has(origin)) return true;
+  const normalizedOrigin = origin.replace(/\/+$/, "");
+  if (allowedOrigins.has(normalizedOrigin)) return true;
 
   // Allow Vercel preview deployments for this app (e.g. siteforgeapp-git-branch.vercel.app)
   // so preview URLs can talk to the same backend without manual env updates.
-  if (/^https:\/\/siteforgeapp(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(origin)) return true;
+  if (/^https:\/\/siteforgeapp(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(normalizedOrigin)) return true;
 
   return false;
 }

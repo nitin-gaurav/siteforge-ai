@@ -8,7 +8,7 @@ const DEFAULT_API_URL = (() => {
     }
   }
 
-  return "https://siteforge-ai-gh6w.onrender.com/api";
+  return "/api";
 })();
 
 function normalizeApiBaseUrl(rawUrl) {

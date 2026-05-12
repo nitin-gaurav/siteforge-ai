@@ -73,6 +73,10 @@ app.use("/api/generate", generateRoutes);
 app.use("/api/assistant", assistantRoutes);
 app.use(errorHandler);
 
-app.listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(port, () => {
+    console.log(`API listening on http://localhost:${port}`);
+  });
+}
+
+export default app;

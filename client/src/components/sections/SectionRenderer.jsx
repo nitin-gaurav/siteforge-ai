@@ -1,0 +1,531 @@
+import React from "react";
+import { ArrowRight, BarChart3, Calendar, Coffee, Mail, Trophy, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+
+function actionKind(section) {
+  const text = `${section.title || ""} ${section.body || ""} ${section.cta || ""}`.toLowerCase();
+
+  if (text.includes("menu") || text.includes("coffee") || text.includes("restaurant") || text.includes("food")) {
+    return "menu";
+  }
+
+  if (text.includes("ranking") || text.includes("rank") || text.includes("leaderboard") || text.includes("top ")) {
+    return "ranking";
+  }
+
+  if (text.includes("demo") || text.includes("book") || text.includes("schedule")) {
+    return "booking";
+  }
+
+  return "contact";
+}
+
+function ActionModal({ section, theme, onClose }) {
+  const kind = actionKind(section);
+  const rankingItems = section.items?.length
+    ? section.items
+    : [
+        { title: "#1 Solo Leveling", body: "Leading the month with explosive action momentum and fan buzz.", meta: "Rank 01" },
+        { title: "#2 Frieren", body: "A thoughtful fantasy favorite with strong audience loyalty.", meta: "Rank 02" },
+        { title: "#3 Jujutsu Kaisen", body: "Battle choreography and dramatic stakes keep it high on the board.", meta: "Rank 03" }
+      ];
+
+  const menuItems = [
+    ["Signature Roast", "Balanced, smooth, and rich with caramel notes.", "$4.50"],
+    ["Cold Brew Flight", "Three seasonal cold brews served over crystal-clear ice.", "$8.00"],
+    ["Bakery Pairing", "Fresh pastry with a handcrafted espresso drink.", "$7.50"]
+  ];
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === "Escape") onClose();
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] grid place-items-center bg-slate-950/30 p-4" onClick={onClose} role="presentation">
+      <div
+        className="max-h-[90vh] w-full max-w-2xl overflow-auto rounded-md bg-white shadow-soft"
+        onClick={(event) => event.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="flex items-center justify-between border-b border-slate-200 p-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">
+              {kind === "menu" ? "Featured menu" : kind === "ranking" ? "Current leaderboard" : kind === "booking" ? "Book a time" : "Get in touch"}
+            </p>
+            <h3 className="mt-1 text-2xl font-black text-ink">{section.cta || "Next step"}</h3>
+          </div>
+          <button type="button" className="rounded-md p-2 text-slate-500 transition hover:bg-slate-100 hover:text-ink" onClick={onClose} aria-label="Close preview modal">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        {kind === "ranking" ? (
+          <div className="grid gap-3 p-4">
+            {rankingItems.map((item, index) => (
+              <div key={`${item.title}-${index}`} className="flex gap-4 rounded-md border border-slate-200 p-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-white" style={{ background: theme.primary }}>
+                  <Trophy className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-black uppercase tracking-[0.14em]" style={{ color: theme.primary }}>
+                    {item.meta || `Rank ${String(index + 1).padStart(2, "0")}`}
+                  </p>
+                  <h4 className="mt-1 break-words font-black text-ink">{item.title}</h4>
+                  <p className="mt-1 break-words text-sm leading-6 text-slate-600">{item.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : kind === "menu" ? (
+          <div className="grid gap-3 p-4">
+            {menuItems.map(([name, description, price]) => (
+              <div key={name} className="flex gap-4 rounded-md border border-slate-200 p-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-white" style={{ background: theme.primary }}>
+                  <Coffee className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <h4 className="font-black text-ink">{name}</h4>
+                    <span className="font-black" style={{ color: theme.primary }}>
+                      {price}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <form className="grid gap-3 p-4">
+            <label className="grid gap-2 text-sm font-bold text-ink">
+              Name
+              <input className="h-11 rounded-md border border-slate-200 px-3 outline-none focus:ring-4 focus:ring-blue-100" placeholder="Your name" />
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-ink">
+              Email
+              <input className="h-11 rounded-md border border-slate-200 px-3 outline-none focus:ring-4 focus:ring-blue-100" placeholder="you@example.com" />
+            </label>
+            <label className="grid gap-2 text-sm font-bold text-ink">
+              Message
+              <textarea className="min-h-24 rounded-md border border-slate-200 px-3 py-2 outline-none focus:ring-4 focus:ring-blue-100" placeholder="Tell us what you need" />
+            </label>
+          </form>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 p-4">
+          <p className="text-sm text-slate-600">
+            {kind === "menu" || kind === "ranking" ? "Generated preview content. Edit sections to customize it." : "This is a preview interaction for the generated website."}
+          </p>
+          <button type="button" className="flex min-h-10 items-center gap-2 rounded-md px-4 font-bold text-white" style={{ background: theme.primary }} onClick={onClose}>
+            {kind === "booking" ? <Calendar className="h-4 w-4" /> : kind === "ranking" ? <BarChart3 className="h-4 w-4" /> : <Mail className="h-4 w-4" />}
+            Continue
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
+function CtaButton({ children, section, sections = [], theme, variant = "primary" }) {
+  const [open, setOpen] = useState(false);
+  const rankingSource = sections.find((nextSection) => nextSection.items?.length && actionKind(nextSection) === "ranking");
+  const modalSection = actionKind(section) === "ranking" && !section.items?.length && rankingSource
+    ? { ...section, items: rankingSource.items }
+    : section;
+  const className =
+    variant === "inverse"
+      ? "inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md bg-white px-4 py-2 font-bold text-ink transition hover:-translate-y-0.5 hover:shadow-lg sm:w-fit"
+      : "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-md px-5 py-3 font-bold text-white transition hover:-translate-y-0.5 hover:shadow-lg sm:w-fit";
+
+  return (
+    <>
+      <button
+        className={className}
+        style={variant === "primary" ? { background: theme.primary } : undefined}
+        onClick={() => setOpen(true)}
+        type="button"
+      >
+        {children}
+        <ArrowRight className="h-4 w-4" />
+      </button>
+      {open ? <ActionModal section={modalSection} theme={theme} onClose={() => setOpen(false)} /> : null}
+    </>
+  );
+}
+
+function SectionImage({ className, image }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!image?.url || failed) {
+    return (
+      <div className={`${className} grid place-items-center bg-slate-900 p-6 text-center text-white`}>
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-200">Image preview</p>
+          <p className="mt-2 text-sm font-bold">{image?.query || image?.alt || "Generated image"}</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      className={className}
+      src={image.url}
+      alt={image.alt || "Website section image"}
+      loading="lazy"
+      onError={() => setFailed(true)}
+    />
+  );
+}
+
+export default function SectionRenderer({ section, sections = [], theme }) {
+  const common = "mx-auto w-full max-w-5xl px-4 py-9 sm:px-6 sm:py-12 lg:px-8 lg:py-14";
+  const heading = "text-3xl font-black leading-tight sm:text-4xl lg:text-5xl";
+  const subheading = "text-2xl font-black leading-tight sm:text-3xl";
+  const body = "text-base leading-7 text-slate-600 sm:text-lg sm:leading-8";
+  const image = section.image?.url ? section.image : null;
+  const cards = section.items?.length ? section.items : [];
+
+  if (section.type === "hero") {
+    return (
+      <section className={common} style={{ color: theme.text }}>
+        <div className="hero-section-layout grid min-w-0 items-center gap-8">
+          <div className="grid gap-6">
+            <h1 className={heading}>{section.title}</h1>
+            <p className={`max-w-2xl ${body}`}>{section.body}</p>
+            {section.cta ? (
+              <CtaButton section={section} sections={sections} theme={theme}>
+                {section.cta}
+              </CtaButton>
+            ) : null}
+          </div>
+          {image ? (
+            <SectionImage
+              className="aspect-[4/3] w-full max-w-full min-w-0 rounded-md object-cover shadow-soft"
+              image={{ ...image, alt: image.alt || section.title }}
+            />
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === "features") {
+    return (
+      <section className={common}>
+        <div className="feature-section-layout grid min-w-0 items-end gap-6">
+          <div className="min-w-0">
+            <h2 className={subheading}>{section.title}</h2>
+            <p className="mt-3 max-w-2xl text-slate-600">{section.body}</p>
+          </div>
+          {image ? <SectionImage className="aspect-[16/10] w-full max-w-full min-w-0 rounded-md object-cover" image={{ ...image, alt: image.alt || section.title }} /> : null}
+        </div>
+        {cards.length ? <div className="feature-card-grid mt-8 grid min-w-0 gap-4">
+          {cards.map((item, index) => (
+            <div key={`${item.title}-${index}`} className="min-w-0 rounded-md border border-slate-200 bg-white p-5">
+              {item.meta ? <p className="mb-3 text-xs font-black uppercase tracking-[0.14em]" style={{ color: theme.primary }}>{item.meta}</p> : null}
+              <h3 className="font-bold">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+            </div>
+          ))}
+        </div> : null}
+      </section>
+    );
+  }
+
+  if (section.type === "about") {
+    return (
+      <section className={common}>
+        <div className="feature-section-layout grid min-w-0 items-center gap-8">
+          {image ? <SectionImage className="aspect-[16/11] w-full max-w-full min-w-0 rounded-md object-cover shadow-sm" image={{ ...image, alt: image.alt || section.title }} /> : null}
+          <div className="min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
+              About
+            </p>
+            <h2 className={`${subheading} mt-2`}>{section.title}</h2>
+            <p className="mt-4 text-base leading-7 text-slate-600">{section.body}</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === "services") {
+    const serviceItems = cards.length
+      ? cards
+      : [
+          { title: "Core Service", body: "The main service customers come for.", meta: "01" },
+          { title: "Customer Support", body: "Helpful guidance for every customer.", meta: "02" },
+          { title: "Custom Solutions", body: "Flexible options for unique needs.", meta: "03" }
+        ];
+
+    return (
+      <section className={common}>
+        <div className="max-w-2xl">
+          <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
+            Services
+          </p>
+          <h2 className={`${subheading} mt-2`}>{section.title}</h2>
+          <p className="mt-3 text-slate-600">{section.body}</p>
+        </div>
+        <div className="feature-card-grid mt-8 grid min-w-0 gap-4">
+          {serviceItems.map((item, index) => (
+            <article key={`${item.title}-${index}`} className="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="mb-3 text-xs font-black uppercase tracking-[0.14em]" style={{ color: theme.primary }}>
+                {item.meta || `0${index + 1}`}
+              </p>
+              <h3 className="font-black text-ink">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === "faq") {
+    const faqItems = cards.length
+      ? cards
+      : [
+          { title: "How do I get started?", body: "Use the call-to-action or contact the business directly." },
+          { title: "Who is this for?", body: "Customers who need a reliable solution in this category." },
+          { title: "Can I request something custom?", body: "Yes, options can be tailored to customer needs." }
+        ];
+
+    return (
+      <section className={common}>
+        <div className="max-w-2xl">
+          <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
+            FAQ
+          </p>
+          <h2 className={`${subheading} mt-2`}>{section.title}</h2>
+          <p className="mt-3 text-slate-600">{section.body}</p>
+        </div>
+        <div className="mt-8 grid gap-3">
+          {faqItems.map((item, index) => (
+            <article key={`${item.title}-${index}`} className="rounded-md border border-slate-200 bg-white p-5">
+              <h3 className="font-black text-ink">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === "contact") {
+    const contactItems = cards.length
+      ? cards
+      : [
+          { title: "Phone", body: "Add the best number for customer inquiries.", meta: "Call" },
+          { title: "Email", body: "Add the primary email for messages and bookings.", meta: "Email" },
+          { title: "Location", body: "Add an address, service area, or online availability.", meta: "Visit" }
+        ];
+
+    return (
+      <section className={common}>
+        <div className="grid gap-6 rounded-md border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+          <div className="max-w-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
+              Contact
+            </p>
+            <h2 className={`${subheading} mt-2`}>{section.title}</h2>
+            <p className="mt-3 text-slate-600">{section.body}</p>
+          </div>
+          <div className="feature-card-grid grid min-w-0 gap-4">
+            {contactItems.map((item, index) => (
+              <article key={`${item.title}-${index}`} className="rounded-md border border-slate-200 p-4">
+                <p className="text-xs font-black uppercase tracking-[0.14em]" style={{ color: theme.primary }}>
+                  {item.meta || "Contact"}
+                </p>
+                <h3 className="mt-2 font-black text-ink">{item.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+              </article>
+            ))}
+          </div>
+          {section.cta ? (
+            <CtaButton section={section} sections={sections} theme={theme}>
+              {section.cta}
+            </CtaButton>
+          ) : null}
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === "seo") {
+    const seoItems = cards.length
+      ? cards
+      : [
+          { title: "Suggested page title", body: section.title, meta: "Title" },
+          { title: "Meta description", body: section.body, meta: "Meta" },
+          { title: "Keyword focus", body: "Primary service, audience, and location keywords.", meta: "SEO" }
+        ];
+
+    return (
+      <section className={common}>
+        <div className="max-w-2xl">
+          <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
+            SEO content
+          </p>
+          <h2 className={`${subheading} mt-2`}>{section.title}</h2>
+          <p className="mt-3 text-slate-600">{section.body}</p>
+        </div>
+        <div className="mt-8 grid gap-3">
+          {seoItems.map((item, index) => (
+            <article key={`${item.title}-${index}`} className="rounded-md border border-slate-200 bg-white p-5">
+              <p className="mb-2 text-xs font-black uppercase tracking-[0.14em]" style={{ color: theme.primary }}>
+                {item.meta || "SEO"}
+              </p>
+              <h3 className="font-black text-ink">{item.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+            </article>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === "graphics") {
+    const graphicItems = cards.length
+      ? cards
+      : [
+          { title: "Business banner visual", body: "A tailored opening image for this business.", meta: "Banner" },
+          { title: "Offer artwork", body: "A graphic direction for the main product or service.", meta: "Offer" },
+          { title: "Promo graphic", body: "A promotional visual for social media.", meta: "Promo" }
+        ];
+
+    return (
+      <section className={common}>
+        <div className="grid gap-6">
+          <div className="max-w-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
+              AI image generation
+            </p>
+            <h2 className={`${subheading} mt-2`}>{section.title}</h2>
+            <p className="mt-3 text-slate-600">{section.body}</p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            {graphicItems.slice(0, 3).map((item, index) => (
+              <article key={`${item.title}-${index}`} className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
+                <div className="relative aspect-[4/3] overflow-hidden" style={{ background: theme.primary }}>
+                  {item.image?.url ? (
+                    <SectionImage className="h-full w-full object-cover" image={{ ...item.image, alt: item.image.alt || item.title }} />
+                  ) : index === 0 && image ? (
+                    <SectionImage className="h-full w-full object-cover" image={{ ...image, alt: image.alt || item.title }} />
+                  ) : (
+                    <div className="grid h-full place-items-center p-5 text-center text-white">
+                      <div>
+                        <div className="mx-auto mb-4 h-14 w-14 rounded-md bg-white/18" />
+                        <p className="text-xs font-black uppercase tracking-[0.14em] opacity-80">{item.meta || "Graphic"}</p>
+                        <p className="mt-2 text-lg font-black leading-tight">{item.title}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="p-4">
+                  <p className="text-xs font-black uppercase tracking-[0.14em]" style={{ color: theme.primary }}>
+                    {item.meta || `Concept ${index + 1}`}
+                  </p>
+                  <h3 className="mt-2 font-black text-ink">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (section.type === "testimonial") {
+    return (
+      <section className={common}>
+        {image ? <SectionImage className="mb-8 aspect-[16/9] w-full rounded-md object-cover sm:aspect-[16/7]" image={{ ...image, alt: image.alt || section.title }} /> : null}
+        <blockquote className="border-l-4 py-2 pl-4 text-xl font-bold leading-8 sm:pl-6 sm:text-2xl sm:leading-10" style={{ borderColor: theme.primary }}>
+          {section.body}
+        </blockquote>
+        <p className="mt-4 text-sm font-semibold text-slate-500">{section.title}</p>
+      </section>
+    );
+  }
+
+  if (section.type === "sidebar") {
+    const sidebarItems = cards.length
+      ? cards
+      : [
+          { title: "Overview", body: "Start with the main story and key highlights." },
+          { title: "Categories", body: "Browse by topic, ranking, or feature." },
+          { title: "Featured", body: "Jump to the most important content." }
+        ];
+
+    return (
+      <section className={common}>
+        <div className="grid min-w-0 gap-6 rounded-md border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[260px_1fr] lg:p-6">
+          <aside className="min-w-0 rounded-md p-4 text-white" style={{ background: theme.primary }}>
+            <p className="text-xs font-black uppercase tracking-[0.16em] opacity-75">Sidebar</p>
+            <h2 className="mt-2 text-2xl font-black leading-tight">{section.title}</h2>
+            <p className="mt-3 text-sm leading-6 opacity-85">{section.body}</p>
+            <nav className="mt-5 grid gap-2">
+              {sidebarItems.map((item, index) => (
+                <a
+                  key={`${item.title}-${index}`}
+                  href={`#sidebar-item-${index + 1}`}
+                  className="rounded-md bg-white/12 px-3 py-2 text-sm font-bold transition hover:bg-white/20"
+                >
+                  {item.title}
+                </a>
+              ))}
+            </nav>
+          </aside>
+
+          <div className="min-w-0">
+            {image ? (
+              <SectionImage
+                className="mb-4 aspect-[16/7] w-full rounded-md object-cover"
+                image={{ ...image, alt: image.alt || section.title }}
+              />
+            ) : null}
+            <div className="grid gap-3">
+              {sidebarItems.map((item, index) => (
+                <article id={`sidebar-item-${index + 1}`} key={`${item.title}-panel-${index}`} className="rounded-md border border-slate-200 p-4">
+                  {item.meta ? <p className="mb-2 text-xs font-black uppercase tracking-[0.14em]" style={{ color: theme.primary }}>{item.meta}</p> : null}
+                  <h3 className="font-black text-ink">{item.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className={common}>
+      <div className="cta-section-layout grid min-w-0 overflow-hidden rounded-md text-white" style={{ background: theme.primary }}>
+        <div className="min-w-0 p-5 sm:p-8">
+          <h2 className={subheading}>{section.title}</h2>
+          <p className="mt-3 max-w-2xl opacity-90">{section.body}</p>
+          {section.cta ? (
+            <div className="mt-6">
+              <CtaButton section={section} sections={sections} theme={theme} variant="inverse">
+              {section.cta}
+              </CtaButton>
+            </div>
+          ) : null}
+        </div>
+        {image ? <SectionImage className="h-full min-h-48 w-full object-cover sm:min-h-64" image={{ ...image, alt: image.alt || section.title }} /> : null}
+      </div>
+    </section>
+  );
+}

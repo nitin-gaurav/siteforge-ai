@@ -10,18 +10,36 @@ import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 const port = process.env.PORT || 4000;
+
+const defaultAllowedOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+  "https://siteforgeapp.vercel.app"
+];
+
 const allowedOrigins = new Set(
-  (process.env.CLIENT_URL || "http://localhost:5173,http://127.0.0.1:5173")
+  (process.env.CLIENT_URL || defaultAllowedOrigins.join(","))
     .split(",")
     .map((origin) => origin.trim())
     .filter(Boolean)
 );
 
+function isAllowedOrigin(origin) {
+  if (!origin) return true;
+  if (allowedOrigins.has(origin)) return true;
+
+  // Allow Vercel preview deployments for this app (e.g. siteforgeapp-git-branch.vercel.app)
+  // so preview URLs can talk to the same backend without manual env updates.
+  if (/^https:\/\/siteforgeapp(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(origin)) return true;
+
+  return false;
+}
+
 app.use(helmet());
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.has(origin)) {
+      if (isAllowedOrigin(origin)) {
         callback(null, true);
         return;
       }

@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 import { dirname, resolve } from "path";
 import { fileURLToPath } from "url";
+import { generateGeminiImage } from "../gemini/geminiImageService.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -186,20 +187,48 @@ export async function searchUnsplashImage(query, index = 0) {
   return image;
 }
 
+async function resolveGraphicImage(query, index) {
+  return (await generateGeminiImage(query, index)) || searchUnsplashImage(query, index);
+}
+
 export async function resolveSectionImages(sections, prompt) {
   return Promise.all(
     sections.map(async (section, index) => {
+      const isGraphicsSection = section.type === "graphics";
       const query = section.image?.query || section.imageQuery || `${prompt} ${section.title || section.type || "website"}`;
       const items = Array.isArray(section.items)
         ? await Promise.all(
             section.items.map(async (item, itemIndex) => {
-              if (section.type !== "graphics") return item;
+              if (!isGraphicsSection) return item;
               const itemQuery = item.image?.query || `${prompt} ${item.title || "business graphic"} banner graphic`;
-              const image = item.image?.url ? { ...item.image, query: itemQuery } : await searchUnsplashImage(itemQuery, index + itemIndex + 1);
+              const image = item.image?.url ? { ...item.image, query: itemQuery } : await resolveGraphicImage(itemQuery, index + itemIndex + 1);
               return { ...item, image };
             })
           )
         : section.items;
+
+      if (isGraphicsSection) {
+        const firstGeneratedImage = Array.isArray(items)
+          ? items.find((item) => item?.image?.url)?.image
+          : null;
+
+        if (section.image?.url && !section.image.url.includes("placehold.co")) {
+          return {
+            ...section,
+            items,
+            image: {
+              ...section.image,
+              query
+            }
+          };
+        }
+
+        return {
+          ...section,
+          items,
+          image: firstGeneratedImage || await resolveGraphicImage(query, index)
+        };
+      }
 
       if (section.image?.url && !section.image.url.includes("placehold.co")) {
         return {

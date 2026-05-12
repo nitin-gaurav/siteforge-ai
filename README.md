@@ -1,6 +1,6 @@
 # AI Website Builder
 
-A full-stack AI website builder with React, Vite, Tailwind, Zustand, Node.js, Express, Supabase auth/database, and Gemini-powered generation.
+A full-stack AI website builder with React, Vite, Tailwind, Zustand, Node.js, Express, Supabase auth/database, Gemini-powered generation, Gemini image generation for AI graphics, and Unsplash-backed website imagery.
 
 ## Structure
 
@@ -38,7 +38,7 @@ cp client/.env.example client/.env
 cp server/.env.example server/.env
 ```
 
-3. Fill in Supabase and Gemini values.
+3. Fill in Supabase, Gemini, and Unsplash values.
 
 4. Run both apps:
 

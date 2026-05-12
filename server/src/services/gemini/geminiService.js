@@ -46,6 +46,31 @@ function titleCase(text) {
 function graphicsItemsForPrompt(prompt) {
   const kind = promptKind(prompt);
   const subject = titleCase(businessSubject(prompt));
+  const lowerPrompt = prompt.toLowerCase();
+  const wantsLogo = lowerPrompt.includes("logo") || lowerPrompt.includes("app icon") || lowerPrompt.includes("brand mark");
+
+  if (wantsLogo) {
+    return [
+      {
+        title: `${subject} primary logo`,
+        body: "A clean square logo concept with a memorable mark and simple brand-ready composition.",
+        meta: "Logo",
+        image: { query: `${prompt} square logo mark clean brand identity no mockup no banner` }
+      },
+      {
+        title: `${subject} app icon`,
+        body: "A compact icon version designed for app stores, profile avatars, and small-screen use.",
+        meta: "App Icon",
+        image: { query: `${prompt} square app icon logo symbol simple centered no text` }
+      },
+      {
+        title: `${subject} brand mark`,
+        body: "A flexible symbol-only logo direction for favicons, packaging, and social profiles.",
+        meta: "Brand Mark",
+        image: { query: `${prompt} minimal brand mark logo symbol vector style centered` }
+      }
+    ];
+  }
 
   if (kind === "coffee") {
     return [
@@ -115,6 +140,11 @@ function graphicsItemsForPrompt(prompt) {
   ];
 }
 
+function promptWantsLogo(prompt = "") {
+  const lowerPrompt = prompt.toLowerCase();
+  return lowerPrompt.includes("logo") || lowerPrompt.includes("app icon") || lowerPrompt.includes("brand mark");
+}
+
 function hasGenericGraphicItems(section) {
   if (section.type !== "graphics" || !Array.isArray(section.items)) return false;
   const genericText = section.items
@@ -133,6 +163,15 @@ function hasGenericGraphicItems(section) {
 
 function specializeGraphicsSection(section, prompt) {
   if (section.type !== "graphics") return section;
+
+  if (promptWantsLogo(prompt)) {
+    return {
+      ...section,
+      title: "Logo Generation",
+      body: "Three square logo concepts for the brand, ready to preview and export.",
+      items: graphicsItemsForPrompt(prompt)
+    };
+  }
 
   if (!Array.isArray(section.items) || section.items.length < 3 || hasGenericGraphicItems(section)) {
     return {

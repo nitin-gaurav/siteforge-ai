@@ -14,9 +14,9 @@ const examples = [
 ];
 
 const imageExamples = [
-  "Banner graphics for a dental clinic",
-  "Social posts for an artisan coffee shop",
-  "Brand visuals for a women's yoga studio"
+  "Logo for a dental clinic",
+  "Logo set for an artisan coffee shop",
+  "App logo for a women's yoga studio"
 ];
 
 const headlinePrefix = "Describe your business";
@@ -28,9 +28,9 @@ const websiteHeadlineSuffixes = [
 ];
 
 const imageHeadlineSuffixes = [
-  "we'll generate graphics",
-  "we'll create visuals",
-  "we'll make banners"
+  "we'll generate logos",
+  "we'll create brand marks",
+  "we'll make app icons"
 ];
 
 const initialBusinessBrief = {
@@ -155,7 +155,7 @@ export default function HomePage() {
 
     try {
       const generationPrompt = isImageMode
-        ? `${trimmedPrompt}\n\nCreate an AI Image Generation graphics section only with generated images, banner graphics, brand visuals, service artwork, and social promotional graphics relevant to this business.`
+        ? `${trimmedPrompt}\n\nCreate an AI Image Generation graphics section only. Generate 3 logo concepts for this business, not website sections. Each item must be a square logo or app-icon concept with a clean mark, brand-ready composition, no mockup scene, no website banner, no social post, no long text. Use meta labels like Logo, App Icon, Brand Mark.`
         : trimmedPrompt;
       const generated = await api.generateSite(generationPrompt);
       const sections = isImageMode
@@ -198,10 +198,10 @@ export default function HomePage() {
           </div>
           <Loader2 className="mb-7 h-16 w-16 animate-spin text-accent" />
           <h2 className="font-display text-3xl font-black text-ink">
-            {isImageMode ? "Generating your graphics..." : "Building your website..."}
+            {isImageMode ? "Generating your logos..." : "Building your website..."}
           </h2>
           <p className="mt-3 max-w-sm text-base font-semibold leading-7 text-muted">
-            {isImageMode ? "Creating business visuals, banners, and saving project..." : "Generating sections, fetching images, saving project..."}
+            {isImageMode ? "Creating logo concepts and export-ready previews..." : "Generating sections, fetching images, saving project..."}
           </p>
         </main>
       ) : null}
@@ -266,7 +266,7 @@ export default function HomePage() {
               <Textarea
                 value={prompt}
                 onChange={(event) => setPrompt(event.target.value)}
-                placeholder={isImageMode ? "Describe the business and graphics you need..." : "Describe your business..."}
+                placeholder={isImageMode ? "Describe the logo, brand, colors, and style you want..." : "Describe your business..."}
                 className="min-h-44 resize-none rounded-xl !border-transparent !bg-[#f3f1fb] px-4 py-3 text-sm font-semibold leading-6 !shadow-none outline-none placeholder:text-slate-500/75 hover:!border-transparent hover:!bg-[#efecf8] focus:!border-transparent focus:!shadow-none focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0"
                 aria-label={isImageMode ? "AI image prompt" : "Website prompt"}
               />
@@ -349,7 +349,7 @@ export default function HomePage() {
                   className="min-w-52 rounded-2xl bg-[#5b4bd1] shadow-[0_14px_34px_rgba(91,75,209,0.24)] hover:bg-[#4f41bd]"
                 >
                   {isImageMode ? <ImagePlus className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
-                  {isImageMode ? "Generate Images" : "Generate Website"}
+                  {isImageMode ? "Generate Logos" : "Generate Website"}
                 </Button>
               </div>
             </div>

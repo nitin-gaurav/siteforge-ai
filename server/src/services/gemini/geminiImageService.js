@@ -22,6 +22,21 @@ function imageModelCandidates() {
 }
 
 function buildImagePrompt(query = "") {
+  const lowerQuery = query.toLowerCase();
+  const isLogo = lowerQuery.includes("logo") || lowerQuery.includes("app icon") || lowerQuery.includes("brand mark");
+
+  if (isLogo) {
+    return [
+      "Create one square, export-ready logo concept.",
+      "Use the following brand brief as the subject.",
+      `Brief: ${query}`,
+      "Style: clean brand identity design, centered composition, simple memorable mark, high contrast, flat or lightly dimensional.",
+      "Do not create a website banner, poster, mockup scene, storefront, social post, or photo-real lifestyle image.",
+      "Avoid long readable text. If text is necessary, use only a short brand-name treatment from the brief.",
+      "Composition: square canvas, generous padding, suitable for app icons, favicons, and logo export."
+    ].join("\n");
+  }
+
   return [
     "Create one polished, production-ready marketing image.",
     "Use the following business visual brief as the subject.",

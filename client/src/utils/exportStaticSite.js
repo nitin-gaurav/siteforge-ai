@@ -62,15 +62,15 @@ function renderSection(section, allSections) {
   if (section.type === "graphics") {
     return `
       <section class="section">
-        <p class="eyebrow">AI Image Generation</p>
+        <p class="eyebrow">Logo Generation</p>
         <h2>${title}</h2>
         <p>${body}</p>
         <div class="grid three">
           ${cards.slice(0, 3).map((item) => `
-            <article class="card image-card">
-              ${imageMarkup(item.image, "card-image")}
+            <article class="card image-card logo-card">
+              <div class="logo-frame">${imageMarkup(item.image, "card-image logo-image")}</div>
               ${item.meta ? `<p class="meta">${escapeHtml(item.meta)}</p>` : ""}
-              <h3>${escapeHtml(item.title || "Generated graphic")}</h3>
+              <h3>${escapeHtml(item.title || "Generated logo")}</h3>
               <p>${escapeHtml(item.body || "")}</p>
             </article>
           `).join("")}
@@ -151,6 +151,8 @@ export function buildStaticSiteHtml({ name, sections, theme }) {
     .image-card h3, .image-card p, .image-card .meta { margin-left: 18px; margin-right: 18px; }
     .image-card p:last-child { margin-bottom: 18px; }
     .card-image { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+    .logo-frame { display: grid; place-items: center; aspect-ratio: 1; background: linear-gradient(135deg, #f8fafc, #eef2ff); padding: 18px; }
+    .logo-image { aspect-ratio: 1; object-fit: contain; border-radius: 8px; background: #fff; box-shadow: 0 18px 45px rgba(15, 23, 42, .12); }
     .meta { color: var(--primary); font-size: 12px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; }
     .sidebar-layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 28px; }
     .sidebar-layout aside, .cta { border-radius: 8px; background: var(--primary); color: #fff; }

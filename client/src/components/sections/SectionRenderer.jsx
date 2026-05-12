@@ -1,5 +1,5 @@
 import React from "react";
-import { ArrowRight, BarChart3, Calendar, Coffee, Mail, Trophy, X } from "lucide-react";
+import { ArrowRight, BarChart3, Calendar, Coffee, Download, Mail, Trophy, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
@@ -184,6 +184,43 @@ function SectionImage({ className, image }) {
       onError={() => setFailed(true)}
     />
   );
+}
+
+function safeFilename(value = "logo") {
+  return `${value}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 48) || "logo";
+}
+
+async function downloadImage(image, filename) {
+  if (!image?.url) return;
+
+  const extension = image.url.startsWith("data:image/jpeg") || image.url.includes("fm=jpg") ? "jpg" : "png";
+  const link = document.createElement("a");
+  link.download = `${safeFilename(filename)}.${extension}`;
+
+  if (image.url.startsWith("data:")) {
+    link.href = image.url;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    return;
+  }
+
+  try {
+    const response = await fetch(image.url);
+    const blob = await response.blob();
+    const objectUrl = URL.createObjectURL(blob);
+    link.href = objectUrl;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(objectUrl);
+  } catch {
+    window.open(image.url, "_blank", "noopener,noreferrer");
+  }
 }
 
 export default function SectionRenderer({ section, sections = [], theme }) {
@@ -398,17 +435,17 @@ export default function SectionRenderer({ section, sections = [], theme }) {
     const graphicItems = cards.length
       ? cards
       : [
-          { title: "Business banner visual", body: "A tailored opening image for this business.", meta: "Banner" },
-          { title: "Offer artwork", body: "A graphic direction for the main product or service.", meta: "Offer" },
-          { title: "Promo graphic", body: "A promotional visual for social media.", meta: "Promo" }
+          { title: "Primary logo concept", body: "A square logo mark for the brand.", meta: "Logo" },
+          { title: "App icon concept", body: "A compact icon version for apps and profiles.", meta: "App Icon" },
+          { title: "Brand mark concept", body: "A simplified symbol for flexible brand use.", meta: "Brand Mark" }
         ];
 
     return (
-      <section className={common}>
-        <div className="grid gap-6">
-          <div className="max-w-2xl">
+      <section className="mx-auto w-full max-w-6xl px-4 py-9 sm:px-6 sm:py-12 lg:px-8 lg:py-14">
+        <div className="grid gap-7">
+          <div className="mx-auto max-w-2xl text-center">
             <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
-              AI image generation
+              Logo generation
             </p>
             <h2 className={`${subheading} mt-2`}>{section.title}</h2>
             <p className="mt-3 text-slate-600">{section.body}</p>
@@ -417,27 +454,38 @@ export default function SectionRenderer({ section, sections = [], theme }) {
           <div className="grid gap-4 sm:grid-cols-3">
             {graphicItems.slice(0, 3).map((item, index) => (
               <article key={`${item.title}-${index}`} className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
-                <div className="relative aspect-[4/3] overflow-hidden" style={{ background: theme.primary }}>
-                  {item.image?.url ? (
-                    <SectionImage className="h-full w-full object-cover" image={{ ...item.image, alt: item.image.alt || item.title }} />
-                  ) : index === 0 && image ? (
-                    <SectionImage className="h-full w-full object-cover" image={{ ...image, alt: image.alt || item.title }} />
-                  ) : (
-                    <div className="grid h-full place-items-center p-5 text-center text-white">
-                      <div>
-                        <div className="mx-auto mb-4 h-14 w-14 rounded-md bg-white/18" />
-                        <p className="text-xs font-black uppercase tracking-[0.14em] opacity-80">{item.meta || "Graphic"}</p>
-                        <p className="mt-2 text-lg font-black leading-tight">{item.title}</p>
+                <div className="grid aspect-square place-items-center bg-[linear-gradient(135deg,#f8fafc,#eef2ff)] p-5">
+                  <div className="aspect-square w-full max-w-[260px] overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
+                    {item.image?.url ? (
+                      <SectionImage className="h-full w-full object-contain" image={{ ...item.image, alt: item.image.alt || item.title }} />
+                    ) : index === 0 && image ? (
+                      <SectionImage className="h-full w-full object-contain" image={{ ...image, alt: image.alt || item.title }} />
+                    ) : (
+                      <div className="grid h-full place-items-center p-5 text-center text-white" style={{ background: theme.primary }}>
+                        <div>
+                          <div className="mx-auto mb-4 h-14 w-14 rounded-md bg-white/18" />
+                          <p className="text-xs font-black uppercase tracking-[0.14em] opacity-80">{item.meta || "Logo"}</p>
+                          <p className="mt-2 text-lg font-black leading-tight">{item.title}</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
                 <div className="p-4">
                   <p className="text-xs font-black uppercase tracking-[0.14em]" style={{ color: theme.primary }}>
-                    {item.meta || `Concept ${index + 1}`}
+                    {item.meta || `Logo ${index + 1}`}
                   </p>
                   <h3 className="mt-2 font-black text-ink">{item.title}</h3>
                   <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
+                  <button
+                    type="button"
+                    onClick={() => downloadImage(item.image || image, item.title || `logo-${index + 1}`)}
+                    disabled={!item.image?.url && !image?.url}
+                    className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-black text-ink transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <Download className="h-4 w-4" />
+                    Export logo
+                  </button>
                 </div>
               </article>
             ))}

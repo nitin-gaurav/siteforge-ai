@@ -264,7 +264,7 @@ export default function EditorPage() {
               className="flex h-10 items-center justify-center gap-1.5 rounded-xl border border-[#e5e0f6] bg-white text-xs font-black text-slate-700 transition hover:bg-[#f4f6fb]"
             >
               <LayoutDashboard className="h-3.5 w-3.5" />
-              Dashboard
+              All Projects
             </Link>
           </div>
         </div>

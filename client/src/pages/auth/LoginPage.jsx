@@ -55,7 +55,10 @@ export default function LoginPage() {
     if (authError) {
       setError(authError.message);
     } else if (!isSignin) {
+      document.activeElement?.blur?.();
       setSuccess(true);
+    } else {
+      document.activeElement?.blur?.();
     }
   }
 

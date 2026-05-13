@@ -60,6 +60,9 @@ export default function LoginPage() {
       <div className="auth-float-orb auth-float-orb-one absolute left-[13%] top-[8%] h-24 w-24 rounded-full bg-[#6657dc]/45" />
       <div className="auth-float-orb auth-float-orb-two absolute bottom-[16%] right-[11%] h-28 w-28 rounded-full bg-white/70 shadow-[0_18px_48px_rgba(77,63,148,0.10)]" />
       <div className="auth-float-orb auth-float-orb-three absolute bottom-[9%] left-[8%] h-20 w-20 rounded-full bg-[#d9d3f2]/65" />
+      <div className="auth-particle auth-particle-one" />
+      <div className="auth-particle auth-particle-two" />
+      <div className="auth-particle auth-particle-three" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-5 sm:px-6 sm:py-8">
         <section
@@ -117,7 +120,7 @@ export default function LoginPage() {
 
               <form onSubmit={submit} className="auth-stagger mt-6 grid gap-4">
                 <div className="auth-form-row relative">
-                  <Mail className="pointer-events-none absolute left-5 top-[1.05rem] h-4 w-4 text-ink" />
+                  <Mail className="auth-input-icon pointer-events-none absolute left-5 top-[1.05rem] h-4 w-4 text-ink" />
                   <Input
                     type="email"
                     autoComplete="email"
@@ -130,7 +133,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="auth-form-row relative">
-                  <Lock className="pointer-events-none absolute left-5 top-[1.05rem] h-4 w-4 text-ink" />
+                  <Lock className="auth-input-icon pointer-events-none absolute left-5 top-[1.05rem] h-4 w-4 text-ink" />
                   <Input
                     type="password"
                     autoComplete={isSignin ? "current-password" : "new-password"}
@@ -173,6 +176,7 @@ export default function LoginPage() {
 
           <div className="auth-panel-right relative hidden overflow-hidden bg-[#5648c8] p-10 text-white lg:block">
             <div className="absolute inset-0 auth-purple-panel" />
+            <div className="auth-panel-sheen absolute inset-y-0 -left-1/3 w-1/3 rotate-12 bg-white/10" />
             <div className="auth-ring auth-ring-one absolute -right-12 -top-12 h-40 w-40 rounded-full border-[28px] border-white/10" />
             <div className="auth-ring auth-ring-two absolute -bottom-20 left-16 h-72 w-72 rounded-full border-[34px] border-white/10" />
             <div className="auth-pulse-dot absolute bottom-9 right-9 h-20 w-20 rounded-full bg-white/90" />
@@ -194,6 +198,7 @@ export default function LoginPage() {
                 </div>
 
                 <div className="auth-preview-layer auth-preview-layer-two absolute bottom-8 left-8 right-8 rounded-3xl bg-[#17142b] p-4 shadow-[0_18px_42px_rgba(31,23,114,0.18)]">
+                  <div className="auth-code-glow absolute inset-x-5 top-4 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
                   <div className="mb-4 grid grid-cols-3 gap-2">
                     <span className="auth-bar h-16 rounded-2xl bg-[#cfd6e6]" />
                     <span className="auth-bar auth-bar-mid h-16 rounded-2xl bg-[#aeb8d7]" />

@@ -192,6 +192,84 @@ textarea {
   will-change: transform;
 }
 
+.auth-logo-badge {
+  animation: authLogoBreathe 3.4s ease-in-out infinite;
+}
+
+.auth-submit {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.auth-submit::after {
+  content: "";
+  position: absolute;
+  inset-block: -40%;
+  left: -70%;
+  width: 48%;
+  transform: skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.34), transparent);
+  animation: authButtonShine 3.6s ease-in-out infinite;
+  z-index: -1;
+}
+
+.auth-input-icon {
+  transition: color 0.22s ease, transform 0.22s ease;
+}
+
+.auth-form-row:focus-within .auth-input-icon {
+  color: #5648c8;
+  transform: translateY(-1px) scale(1.08);
+}
+
+.auth-form-row::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: 18px;
+  box-shadow: 0 0 0 0 rgba(86, 72, 200, 0);
+  transition: box-shadow 0.25s ease;
+}
+
+.auth-form-row:focus-within::after {
+  box-shadow: 0 16px 34px rgba(86, 72, 200, 0.12);
+}
+
+.auth-particle {
+  position: absolute;
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(86, 72, 200, 0.28);
+  box-shadow: 0 0 22px rgba(86, 72, 200, 0.22);
+  pointer-events: none;
+}
+
+.auth-particle-one {
+  left: 24%;
+  top: 18%;
+  animation: authParticleDrift 9s ease-in-out infinite;
+}
+
+.auth-particle-two {
+  left: 42%;
+  bottom: 17%;
+  width: 5px;
+  height: 5px;
+  animation: authParticleDrift 11s ease-in-out 1.4s infinite reverse;
+}
+
+.auth-particle-three {
+  right: 7%;
+  top: 30%;
+  width: 6px;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.56);
+  animation: authParticleDrift 10s ease-in-out 0.7s infinite;
+}
+
 .auth-brand-shimmer {
   background: linear-gradient(90deg, #17142b 0%, #5648c8 38%, #9f92ff 50%, #5648c8 62%, #17142b 100%);
   background-size: 220% 100%;
@@ -230,6 +308,11 @@ textarea {
   animation: authPulseDot 4.2s ease-in-out infinite;
 }
 
+.auth-panel-sheen {
+  animation: authPanelSheen 6.4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
 .auth-preview-card {
   transform-style: preserve-3d;
   animation: authCardDrift 7s ease-in-out infinite;
@@ -249,6 +332,10 @@ textarea {
 
 .auth-live-pill {
   animation: authLivePulse 2.4s ease-in-out infinite;
+}
+
+.auth-code-glow {
+  animation: authCodeGlow 2.6s ease-in-out infinite;
 }
 
 .auth-line-grow {
@@ -317,6 +404,22 @@ textarea {
   50% { background-position: 100% 50%; }
 }
 
+@keyframes authLogoBreathe {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(86, 72, 200, 0); transform: translateY(0); }
+  50% { box-shadow: 0 14px 32px rgba(86, 72, 200, 0.16); transform: translateY(-2px); }
+}
+
+@keyframes authButtonShine {
+  0%, 42% { transform: translateX(0) skewX(-18deg); opacity: 0; }
+  50% { opacity: 1; }
+  68%, 100% { transform: translateX(440%) skewX(-18deg); opacity: 0; }
+}
+
+@keyframes authParticleDrift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.45; }
+  50% { transform: translate3d(28px, -34px, 0) scale(1.45); opacity: 0.9; }
+}
+
 @keyframes authFloatOne {
   0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
   50% { transform: translate3d(22px, -26px, 0) scale(1.08); }
@@ -345,6 +448,12 @@ textarea {
   50% { transform: scale(1.12); opacity: 1; }
 }
 
+@keyframes authPanelSheen {
+  0%, 18% { transform: translateX(0) rotate(12deg); opacity: 0; }
+  32% { opacity: 0.48; }
+  52%, 100% { transform: translateX(520%) rotate(12deg); opacity: 0; }
+}
+
 @keyframes authCardDrift {
   0%, 100% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
   50% { transform: translateY(-10px) rotateX(2deg) rotateY(-3deg); }
@@ -358,6 +467,11 @@ textarea {
 @keyframes authLivePulse {
   0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
   50% { box-shadow: 0 0 0 7px rgba(16, 185, 129, 0.12); }
+}
+
+@keyframes authCodeGlow {
+  0%, 100% { opacity: 0.16; transform: scaleX(0.72); }
+  50% { opacity: 0.68; transform: scaleX(1); }
 }
 
 @keyframes authLineGrow {
@@ -389,12 +503,17 @@ textarea {
   .auth-form-row,
   .auth-alert-in,
   .auth-brand-shimmer,
+  .auth-logo-badge,
+  .auth-submit::after,
+  .auth-particle,
   .auth-float-orb,
   .auth-ring,
+  .auth-panel-sheen,
   .auth-pulse-dot,
   .auth-preview-card,
   .auth-preview-layer,
   .auth-live-pill,
+  .auth-code-glow,
   .auth-line-grow,
   .auth-bar,
   .auth-spark-bubble,

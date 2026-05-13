@@ -14,7 +14,9 @@ function summarizeProject(project) {
     theme: project.theme || {},
     created_at: project.created_at,
     updated_at: project.updated_at,
-    section_count: sections.length,
+    section_count: project.section_count ?? sections.length,
+    preview_image_url: project.preview_image_url || project.sections?.find((section) => section.image?.url)?.image?.url || "",
+    preview_image_alt: project.preview_image_alt || project.sections?.find((section) => section.image?.alt)?.image?.alt || "",
     sections: sections.map((section) => ({
       type: section.type || "",
       title: section.title || ""

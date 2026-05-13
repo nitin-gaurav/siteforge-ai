@@ -41,7 +41,7 @@ function inferIndustryTag(project) {
 function ProjectCard({ project, onDelete, onRequestRename, deleting }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const updatedAt = new Date(project.updated_at || project.created_at);
-  const previewImage = project.sections?.find((section) => section.image?.url)?.image?.url;
+  const previewImage = project.preview_image_url || project.sections?.find((section) => section.image?.url)?.image?.url;
   const sectionCount = project.section_count ?? project.sections?.length ?? 0;
   const industryTag = inferIndustryTag(project);
   const theme = {

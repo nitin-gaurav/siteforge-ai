@@ -21,15 +21,33 @@ function serializeProjectUpdate(body) {
   return project;
 }
 
+function summarizeProject(project) {
+  const sections = Array.isArray(project.sections) ? project.sections : [];
+  const previewImage = sections.find((section) => section?.image?.url)?.image;
+
+  return {
+    id: project.id,
+    user_id: project.user_id,
+    name: project.name,
+    prompt: project.prompt,
+    theme: project.theme,
+    created_at: project.created_at,
+    updated_at: project.updated_at,
+    section_count: sections.length,
+    preview_image_url: previewImage?.url || "",
+    preview_image_alt: previewImage?.alt || ""
+  };
+}
+
 export async function listProjects(req, res) {
   const { data, error } = await supabaseAdmin
     .from("projects")
-    .select("id,user_id,name,prompt,theme,created_at,updated_at")
+    .select("id,user_id,name,prompt,theme,sections,created_at,updated_at")
     .eq("user_id", req.user.id)
     .order("updated_at", { ascending: false });
 
   if (error) throw error;
-  res.json({ projects: data });
+  res.json({ projects: (data || []).map(summarizeProject) });
 }
 
 export async function getProject(req, res) {

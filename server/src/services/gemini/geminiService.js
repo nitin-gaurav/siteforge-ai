@@ -43,147 +43,6 @@ function titleCase(text) {
   return text.replace(/\w\S*/g, (word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase());
 }
 
-function graphicsItemsForPrompt(prompt) {
-  const kind = promptKind(prompt);
-  const subject = titleCase(businessSubject(prompt));
-  const lowerPrompt = prompt.toLowerCase();
-  const wantsLogo = lowerPrompt.includes("logo") || lowerPrompt.includes("app icon") || lowerPrompt.includes("brand mark");
-
-  if (wantsLogo) {
-    return [
-      {
-        title: `${subject} primary logo`,
-        body: "A clean square logo concept with a memorable mark and simple brand-ready composition.",
-        meta: "Logo",
-        image: { query: `${prompt} square logo mark clean brand identity no mockup no banner` }
-      },
-      {
-        title: `${subject} app icon`,
-        body: "A compact icon version designed for app stores, profile avatars, and small-screen use.",
-        meta: "App Icon",
-        image: { query: `${prompt} square app icon logo symbol simple centered no text` }
-      },
-      {
-        title: `${subject} brand mark`,
-        body: "A flexible symbol-only logo direction for favicons, packaging, and social profiles.",
-        meta: "Brand Mark",
-        image: { query: `${prompt} minimal brand mark logo symbol vector style centered` }
-      }
-    ];
-  }
-
-  if (kind === "coffee") {
-    return [
-      {
-        title: "Coffee shop storefront",
-        body: "A warm exterior or counter visual that introduces the cafe at first glance.",
-        meta: "Cafe",
-        image: { query: `${prompt} cozy coffee shop storefront warm cafe banner` }
-      },
-      {
-        title: "Signature drink close-up",
-        body: "A focused product image for espresso, latte art, pastries, or the house special.",
-        meta: "Menu",
-        image: { query: `${prompt} latte art espresso pastry close up cafe menu graphic` }
-      },
-      {
-        title: "Social coffee promo",
-        body: "A ready-to-use promotional visual for offers, events, or daily specials.",
-        meta: "Promo",
-        image: { query: `${prompt} coffee shop social media promotion cozy cafe` }
-      }
-    ];
-  }
-
-  if (kind === "automotive") {
-    return [
-      {
-        title: `${subject} showroom banner`,
-        body: "A polished hero visual featuring vehicles, showroom energy, and a confident automotive brand presence.",
-        meta: "Banner",
-        image: { query: `${prompt} modern car showroom dealership banner` }
-      },
-      {
-        title: `${subject} featured vehicle artwork`,
-        body: "A focused promotional image for available cars, premium models, or key inventory categories.",
-        meta: "Inventory",
-        image: { query: `${prompt} featured car dealership promotional vehicle` }
-      },
-      {
-        title: `${subject} test drive campaign`,
-        body: "A conversion-oriented graphic that encourages visitors to book a test drive or contact the showroom.",
-        meta: "Test drive",
-        image: { query: `${prompt} car test drive dealership campaign` }
-      }
-    ];
-  }
-
-  return [
-    {
-      title: `${subject} banner visual`,
-      body: "A polished opening image tailored to the business, offer, and audience.",
-      meta: "Banner",
-      image: { query: `${prompt} business banner visual` }
-    },
-    {
-      title: `${subject} offer artwork`,
-      body: "A supporting graphic that highlights the main product, service, or experience.",
-      meta: "Offer",
-      image: { query: `${prompt} product service highlight artwork` }
-    },
-    {
-      title: `${subject} promo graphic`,
-      body: "A compact campaign image for social posts, ads, or announcements.",
-      meta: "Promo",
-      image: { query: `${prompt} social media promotional graphic` }
-    }
-  ];
-}
-
-function promptWantsLogo(prompt = "") {
-  const lowerPrompt = prompt.toLowerCase();
-  return lowerPrompt.includes("logo") || lowerPrompt.includes("app icon") || lowerPrompt.includes("brand mark");
-}
-
-function hasGenericGraphicItems(section) {
-  if (section.type !== "graphics" || !Array.isArray(section.items)) return false;
-  const genericText = section.items
-    .map((item) => `${item.title || ""} ${item.body || ""} ${item.meta || ""}`)
-    .join(" ")
-    .toLowerCase();
-
-  return [
-    "brand hero graphic",
-    "service highlight",
-    "social-ready artwork",
-    "strong visual for the first impression",
-    "polished visual direction for the first impression"
-  ].some((phrase) => genericText.includes(phrase));
-}
-
-function specializeGraphicsSection(section, prompt) {
-  if (section.type !== "graphics") return section;
-
-  if (promptWantsLogo(prompt)) {
-    return {
-      ...section,
-      title: "Logo Generation",
-      body: "Three square logo concepts for the brand, ready to preview and export.",
-      items: graphicsItemsForPrompt(prompt)
-    };
-  }
-
-  if (!Array.isArray(section.items) || section.items.length < 3 || hasGenericGraphicItems(section)) {
-    return {
-      ...section,
-      body: section.body || "Generated images and banner graphics relevant to the business idea.",
-      items: graphicsItemsForPrompt(prompt)
-    };
-  }
-
-  return section;
-}
-
 function normalizeImage(section, prompt) {
   const image = section.image && typeof section.image === "object" ? section.image : {};
   const query = image.query || section.imageQuery || `${prompt} ${section.type || "website"}`;
@@ -358,19 +217,6 @@ function fallbackWebsiteDraft(prompt) {
         },
         {
           id: randomUUID(),
-          type: "graphics",
-          title: "AI Image Generation",
-          body: "Automotive visuals for showroom banners, vehicle highlights, and promotional campaigns.",
-          cta: "",
-          image: normalizeImage({ type: "graphics", title: "Automotive brand visuals", image: { query: `${prompt} automotive website banner car showroom` } }, prompt),
-          items: [
-            { title: "Showroom hero banner", body: "A polished car showroom visual for the top of the website.", meta: "Banner", image: { query: `${prompt} premium car showroom website hero banner` } },
-            { title: "Featured vehicle artwork", body: "A sharp promotional visual for inventory or best-selling models.", meta: "Inventory", image: { query: `${prompt} featured vehicle dealership promotion` } },
-            { title: "Test drive campaign", body: "A conversion-focused graphic for booking test drives.", meta: "CTA", image: { query: `${prompt} test drive car dealership campaign` } }
-          ]
-        },
-        {
-          id: randomUUID(),
           type: "faq",
           title: "Frequently asked questions",
           body: "Answer the questions car shoppers usually ask before they visit, call, or book a test drive.",
@@ -464,15 +310,6 @@ function fallbackWebsiteDraft(prompt) {
           { title: "Customer Support", body: "Helpful guidance before, during, and after the purchase.", meta: "02" },
           { title: "Custom Solutions", body: "Flexible options tailored to each customer need.", meta: "03" }
         ]
-      },
-      {
-        id: randomUUID(),
-        type: "graphics",
-        title: "AI Image Generation",
-        body: "Generated images and banner graphics relevant to the business idea.",
-        cta: "",
-        image: normalizeImage({ type: "graphics", title: "Business visual graphics", image: { query: `${prompt} branded graphics illustration` } }, prompt),
-        items: graphicsItemsForPrompt(prompt)
       },
       {
         id: randomUUID(),
@@ -922,31 +759,12 @@ Rules:
 `;
 }
 
-function graphicsSection(prompt) {
-  return {
-    id: randomUUID(),
-    type: "graphics",
-    title: "AI Image Generation",
-    body: "Generated images and banner graphics relevant to the business idea.",
-    cta: "",
-    image: normalizeImage(
-      {
-        type: "graphics",
-        title: "Business graphics",
-        image: { query: `${prompt} branded business graphics illustration` }
-      },
-      prompt
-    ),
-    items: graphicsItemsForPrompt(prompt)
-  };
-}
-
 function normalizeWebsite(payload, prompt) {
   const fallback = fallbackWebsiteDraft(prompt);
   const normalizedSections = Array.isArray(payload.sections) && payload.sections.length
     ? payload.sections.map((section, index) => ({
         id: section.id || randomUUID(),
-        type: ["hero", "about", "services", "faq", "features", "testimonial", "cta", "sidebar", "graphics", "contact", "seo"].includes(section.type) ? section.type : "features",
+        type: ["hero", "about", "services", "faq", "features", "testimonial", "cta", "sidebar", "contact", "seo"].includes(section.type) ? section.type : "features",
         title: section.title || "Untitled section",
         body: section.body || "",
         cta: section.cta || "",
@@ -959,16 +777,8 @@ function normalizeWebsite(payload, prompt) {
               image: item.image && typeof item.image === "object" ? item.image : undefined
             }))
           : []
-      })).map((section) => specializeGraphicsSection(section, prompt))
+      }))
     : fallback.sections;
-
-  const sections = normalizedSections.some((section) => section.type === "graphics")
-    ? normalizedSections
-    : [
-        ...normalizedSections.slice(0, Math.max(normalizedSections.length - 1, 1)),
-        graphicsSection(prompt),
-        ...normalizedSections.slice(Math.max(normalizedSections.length - 1, 1))
-      ];
 
   return {
     name: payload.name || fallback.name,
@@ -976,7 +786,7 @@ function normalizeWebsite(payload, prompt) {
       ...fallback.theme,
       ...(payload.theme || {})
     },
-    sections
+    sections: normalizedSections
   };
 }
 
@@ -995,7 +805,7 @@ Return only valid JSON with this exact shape:
   },
   "sections": [
     {
-      "type": "hero|about|services|faq|testimonial|contact|seo|cta|sidebar|graphics",
+      "type": "hero|about|services|faq|testimonial|contact|seo|cta|sidebar|features",
       "title": "section title",
       "body": "section copy",
       "cta": "optional button text",
@@ -1017,8 +827,6 @@ Return only valid JSON with this exact shape:
 Use these required sections for normal business websites: hero, about, services, faq, testimonial, contact, seo, cta.
 If contact information is provided, include it in a "contact" section with useful items for phone, email, address, hours, or social links.
 If SEO keywords are provided, include an "seo" section with a concise SEO title/meta-style summary and keyword-focused supporting items.
-Also include one "graphics" section titled "AI Image Generation" with 3 specific visual concepts for generated images, banner graphics, brand visuals, or promotional artwork relevant to that business.
-For the graphics section, do not use generic card titles such as "Brand hero graphic", "Service highlight", or "Social-ready artwork"; write titles, meta labels, descriptions, and image queries that name the actual business category and visual subject.
 Include relevant, varied image metadata for every section. Do not reuse the same image query.
 If the user asks for a sidebar, side navigation, filters, categories, table of contents, or left/right navigation panel, use type "sidebar" for that section and include 3 to 6 items.
 For ranking, directory, menu, product, review, list, or comparison websites, include 3 to 6 specific items in the relevant sections.

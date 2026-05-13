@@ -47,6 +47,20 @@ const toneOptions = [
   "Professional"
 ];
 
+const websiteLoadingSteps = [
+  "Drafting the page structure...",
+  "Writing sections and calls to action...",
+  "Matching visual direction...",
+  "Saving your website project..."
+];
+
+const imageLoadingSteps = [
+  "Reading your brand brief...",
+  "Sketching logo directions...",
+  "Rendering AI logo concepts...",
+  "Preparing your editable preview..."
+];
+
 function projectNameFromPrompt(prompt) {
   const cleaned = prompt.trim().replace(/\s+/g, " ");
   if (!cleaned) return "Untitled website";
@@ -134,6 +148,8 @@ export default function HomePage() {
   const [typedHeadlineSuffix, setTypedHeadlineSuffix] = useState("");
   const [isDeletingHeadline, setIsDeletingHeadline] = useState(false);
   const [toneMenuOpen, setToneMenuOpen] = useState(false);
+  const [loadingStartedAt, setLoadingStartedAt] = useState(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const headlineTimeoutRef = useRef(null);
   const toneMenuRef = useRef(null);
 
@@ -146,6 +162,9 @@ export default function HomePage() {
   );
   const headlineSuffix = headlineSuffixOptions[headlineIndex % headlineSuffixOptions.length];
   const displayHeadline = `${headlinePrefix} - ${headlineSuffix}`;
+  const loadingSteps = isImageMode ? imageLoadingSteps : websiteLoadingSteps;
+  const loadingStepIndex = Math.min(Math.floor(elapsedSeconds / 8), loadingSteps.length - 1);
+  const loadingProgress = Math.min(92, 18 + loadingStepIndex * 18 + (elapsedSeconds % 8) * 2);
 
   useEffect(() => {
     setHeadlineIndex(0);
@@ -191,6 +210,16 @@ export default function HomePage() {
     return () => clearTimeout(headlineTimeoutRef.current);
   }, [headlineSuffix, headlineSuffixOptions.length, isDeletingHeadline, typedHeadlineSuffix]);
 
+  useEffect(() => {
+    if (!generating || !loadingStartedAt) return undefined;
+
+    const interval = setInterval(() => {
+      setElapsedSeconds(Math.max(0, Math.floor((Date.now() - loadingStartedAt) / 1000)));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [generating, loadingStartedAt]);
+
   async function generateWebsite(event) {
     event?.preventDefault();
 
@@ -199,6 +228,8 @@ export default function HomePage() {
 
     setError("");
     setGenerating(true);
+    setLoadingStartedAt(Date.now());
+    setElapsedSeconds(0);
 
     try {
       const generated = isImageMode ? null : await api.generateSite(trimmedPrompt);
@@ -218,6 +249,7 @@ export default function HomePage() {
     } catch (requestError) {
       setError(requestError.message);
       setGenerating(false);
+      setLoadingStartedAt(null);
     }
   }
 
@@ -245,7 +277,18 @@ export default function HomePage() {
             {isImageMode ? "Generating your logos..." : "Building your website..."}
           </h2>
           <p className="mt-3 max-w-sm text-base font-semibold leading-7 text-muted">
-            {isImageMode ? "Creating logo concepts and export-ready previews..." : "Generating sections, fetching images, saving project..."}
+            {loadingSteps[loadingStepIndex]}
+          </p>
+          <div className="mt-7 w-full max-w-xs overflow-hidden rounded-full bg-slate-100">
+            <div
+              className="h-2 rounded-full bg-[#5b4bd1] transition-all duration-700 ease-out"
+              style={{ width: `${loadingProgress}%` }}
+            />
+          </div>
+          <p className="mt-3 text-sm font-semibold text-slate-500">
+            {elapsedSeconds < 12
+              ? "Keeping the request active..."
+              : `Still working - ${elapsedSeconds}s elapsed. AI image generation can take a little longer.`}
           </p>
         </main>
       ) : null}

@@ -182,7 +182,7 @@ export default function LoginPage() {
             <div className="auth-pulse-dot absolute bottom-9 right-9 h-20 w-20 rounded-full bg-white/90" />
 
             <div className="relative z-10 flex h-full items-center justify-center">
-              <div className="auth-preview-card relative h-[400px] w-[340px] rounded-[34px] border border-white/28 bg-white/12 shadow-[0_22px_58px_rgba(27,18,116,0.16)] backdrop-blur-md">
+              <div className="auth-preview-card relative h-[400px] w-[340px] rounded-[34px] border border-white/40 bg-white/10 shadow-[0_22px_58px_rgba(27,18,116,0.16)]">
                 <div className="auth-preview-layer auth-preview-layer-one absolute inset-x-8 top-8 rounded-3xl bg-white p-4 text-ink shadow-[0_18px_42px_rgba(31,23,114,0.16)]">
                   <div className="mb-4 flex items-center justify-between">
                     <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f3f1fb] text-[#5648c8]">

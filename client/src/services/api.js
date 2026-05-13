@@ -38,6 +38,7 @@ function normalizeApiBaseUrl(rawUrl) {
 }
 
 const API_URL = normalizeApiBaseUrl(import.meta.env.VITE_API_URL || DEFAULT_API_URL);
+const REQUEST_TIMEOUT_MS = 120000;
 
 async function authHeaders() {
   const {
@@ -56,13 +57,29 @@ async function authHeaders() {
 }
 
 async function request(path, options = {}) {
-  const makeRequest = async () => fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      ...(await authHeaders()),
-      ...options.headers
+  const makeRequest = async () => {
+    const { timeoutMs, ...fetchOptions } = options;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs || REQUEST_TIMEOUT_MS);
+
+    try {
+      return await fetch(`${API_URL}${path}`, {
+        ...fetchOptions,
+        signal: controller.signal,
+        headers: {
+          ...(await authHeaders()),
+          ...fetchOptions.headers
+        }
+      });
+    } catch (error) {
+      if (error.name === "AbortError") {
+        throw new Error("The request took too long. Please try again with a shorter prompt.");
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-  });
+  };
 
   let response = await makeRequest();
   if (response.status === 401) {

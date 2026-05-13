@@ -8,6 +8,7 @@ config();
 config({ path: resolve(__dirname, "../../../.env"), override: false });
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
+const GEMINI_IMAGE_TIMEOUT_MS = Number(process.env.GEMINI_IMAGE_TIMEOUT_MS || 10000);
 const imageCache = new Map();
 
 let cachedFetch;
@@ -24,9 +25,9 @@ async function resolveFetch() {
 function imageModelCandidates() {
   return [...new Set([
     process.env.GEMINI_IMAGE_MODEL,
-    process.env.GEMINI_MODEL,
     "gemini-3.1-flash-image-preview",
     "gemini-2.5-flash-image",
+    "gemini-2.5-flash-image-preview",
     "gemini-3-pro-image-preview"
   ].filter(Boolean))];
 }
@@ -93,9 +94,13 @@ export async function generateGeminiImage(query, index = 0) {
     const url = new URL(`${GEMINI_API_URL}/${modelName}:generateContent`);
     url.searchParams.set("key", process.env.GEMINI_API_KEY);
 
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), GEMINI_IMAGE_TIMEOUT_MS);
+
     try {
       const response = await fetchFn(url, {
         method: "POST",
+        signal: controller.signal,
         headers: {
           "Content-Type": "application/json"
         },
@@ -115,6 +120,7 @@ export async function generateGeminiImage(query, index = 0) {
           }
         })
       });
+      clearTimeout(timeout);
 
       const payload = await response.json().catch(() => ({}));
 
@@ -143,7 +149,9 @@ export async function generateGeminiImage(query, index = 0) {
       imageCache.set(cacheKey, image);
       return image;
     } catch (error) {
-      errors.push(`${modelName}: ${error.message}`);
+      errors.push(`${modelName}: ${error.name === "AbortError" ? "request timed out" : error.message}`);
+    } finally {
+      clearTimeout(timeout);
     }
   }
 

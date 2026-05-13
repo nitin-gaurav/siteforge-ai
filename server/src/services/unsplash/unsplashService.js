@@ -245,8 +245,12 @@ export async function searchUnsplashImage(query, index = 0) {
 }
 
 async function resolveGraphicImage(query, index) {
-  const generatedImage = await generateGeminiImage(query, index);
-  if (generatedImage) return generatedImage;
+  try {
+    const generatedImage = await generateGeminiImage(query, index);
+    if (generatedImage) return generatedImage;
+  } catch (error) {
+    console.warn("Gemini image generation crashed. Falling back to stock or placeholder image.", error.message);
+  }
 
   const stockImage = await searchUnsplashImage(query, index);
   if (stockImage?.url) return stockImage;

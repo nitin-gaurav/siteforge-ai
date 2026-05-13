@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "install:all": "npm install",
-    "dev": "concurrently \"npm run dev -w server\" \"npm run dev -w client\"",
-    "build": "npm run build -w client",
-    "start": "npm run start -w server"
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "build": "npm run build --prefix client",
+    "start": "npm run start --prefix server"
   },
   "devDependencies": {
     "concurrently": "^9.1.2"

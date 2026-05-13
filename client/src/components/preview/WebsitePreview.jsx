@@ -46,14 +46,18 @@ function PreviewSkeleton() {
 export default function WebsitePreview({ sections, theme, loading = false }) {
   const [viewport, setViewport] = useState("desktop");
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
+  const [contentHeight, setContentHeight] = useState(0);
   const canvasRef = useRef(null);
+  const contentRef = useRef(null);
   const userSelectedViewportRef = useRef(false);
   const activeViewport = viewports[viewport];
   const availableWidth = Math.max(canvasSize.width - 16, 320);
   const availableHeight = Math.max(canvasSize.height - 16, 420);
   const maxScale = viewport === "desktop" ? 1.1 : viewport === "tablet" ? 1.15 : 1.25;
   const previewScale = Math.min(Math.max(availableWidth / activeViewport.width, 0.25), maxScale);
-  const previewHeight = Math.max(availableHeight / previewScale, 520);
+  const visibleFrameHeight = Math.max(availableHeight / previewScale, viewport === "mobile" ? 420 : 520);
+  const contentFrameHeight = contentHeight ? contentHeight + 44 : visibleFrameHeight;
+  const previewHeight = Math.min(visibleFrameHeight, Math.max(contentFrameHeight, viewport === "mobile" ? 420 : 520));
 
   useEffect(() => {
     if (!canvasRef.current) return undefined;
@@ -69,6 +73,19 @@ export default function WebsitePreview({ sections, theme, loading = false }) {
     observer.observe(canvasRef.current);
     return () => observer.disconnect();
   }, []);
+
+  useEffect(() => {
+    if (!contentRef.current) return undefined;
+
+    function updateContentHeight() {
+      setContentHeight(contentRef.current?.scrollHeight || 0);
+    }
+
+    updateContentHeight();
+    const observer = new ResizeObserver(updateContentHeight);
+    observer.observe(contentRef.current);
+    return () => observer.disconnect();
+  }, [sections, viewport]);
 
   return (
     <div className="flex h-full min-h-[620px] min-w-0 flex-col overflow-hidden rounded-[20px] border border-white/75 bg-white/72 shadow-[0_24px_70px_rgba(77,63,148,0.16)] backdrop-blur-xl lg:min-h-0 lg:rounded-[24px]">
@@ -122,7 +139,7 @@ export default function WebsitePreview({ sections, theme, loading = false }) {
                 <span className="ml-3 min-w-0 truncate text-xs font-semibold text-slate-500">preview.siteforge.local</span>
                 <span className="ml-auto text-xs font-bold text-slate-400">{Math.round(activeViewport.width)}px</span>
               </div>
-              <main className="website-preview-surface h-[calc(100%-44px)] overflow-y-auto overflow-x-hidden" style={{ background: theme.background }}>
+              <main ref={contentRef} className="website-preview-surface h-[calc(100%-44px)] overflow-y-auto overflow-x-hidden" style={{ background: theme.background }}>
                 {loading ? (
                   <PreviewSkeleton />
                 ) : (

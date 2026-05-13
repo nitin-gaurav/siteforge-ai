@@ -149,9 +149,15 @@ export default function AppShell({ children }) {
     return () => document.removeEventListener("mousedown", closeProfileMenu);
   }, []);
 
-  async function signOut() {
-    await supabase.auth.signOut();
-    navigate("/login");
+  function signOut() {
+    setProfileOpen(false);
+    localStorage.removeItem(recentProjectStorageKey);
+    localStorage.removeItem(recentProjectCacheKey);
+    navigate("/login", { replace: true });
+
+    supabase.auth.signOut().catch((error) => {
+      console.error("Sign out failed", error);
+    });
   }
 
   return (

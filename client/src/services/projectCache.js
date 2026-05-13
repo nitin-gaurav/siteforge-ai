@@ -26,7 +26,7 @@ function summarizeProject(project) {
 
 export function readCachedProjects() {
   try {
-    const cached = JSON.parse(sessionStorage.getItem(projectCacheKey) || "[]");
+    const cached = JSON.parse(localStorage.getItem(projectCacheKey) || "[]");
     return Array.isArray(cached) ? cached.filter((project) => project?.id) : [];
   } catch {
     return [];
@@ -35,7 +35,7 @@ export function readCachedProjects() {
 
 export function writeCachedProjects(projects) {
   try {
-    sessionStorage.setItem(projectCacheKey, JSON.stringify((projects || []).map(summarizeProject)));
+    localStorage.setItem(projectCacheKey, JSON.stringify((projects || []).map(summarizeProject)));
   } catch {
     // Ignore storage quota errors. The network result is still returned.
   }

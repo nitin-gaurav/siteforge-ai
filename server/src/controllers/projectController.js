@@ -35,7 +35,11 @@ function summarizeProject(project) {
     updated_at: project.updated_at,
     section_count: sections.length,
     preview_image_url: previewImage?.url || "",
-    preview_image_alt: previewImage?.alt || ""
+    preview_image_alt: previewImage?.alt || "",
+    sections: sections.map((section) => ({
+      type: section.type || "",
+      title: section.title || ""
+    }))
   };
 }
 

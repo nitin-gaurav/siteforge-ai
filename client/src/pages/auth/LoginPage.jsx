@@ -16,7 +16,12 @@ export default function LoginPage() {
   const [success, setSuccess] = useState(false);
 
   if (authLoading) {
-    return <div className="flex min-h-screen items-center justify-center bg-[#f4f2fb] font-semibold text-ink">Restoring session...</div>;
+    return (
+      <main className="relative grid min-h-screen place-items-center overflow-hidden bg-[#f4f2fb] text-ink">
+        <div className="absolute inset-0 auth-soft-stage" />
+        <div className="relative h-10 w-10 rounded-full border-4 border-[#d9d3f2] border-t-[#5b4bd1] animate-spin" aria-label="Loading" />
+      </main>
+    );
   }
 
   if (session) return <Navigate to="/" replace />;

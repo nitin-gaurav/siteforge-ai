@@ -24,12 +24,12 @@ async function resolveFetch() {
 
 function imageModelCandidates() {
   return [...new Set([
-    process.env.GEMINI_IMAGE_MODEL,
-    "gemini-3.1-flash-image-preview",
     "gemini-2.5-flash-image",
-    "gemini-2.5-flash-image-preview",
+    process.env.GEMINI_IMAGE_MODEL,
     "gemini-3-pro-image-preview"
-  ].filter(Boolean))];
+  ]
+    .filter(Boolean)
+    .filter((modelName) => modelName !== process.env.GEMINI_MODEL))];
 }
 
 function buildImagePrompt(query = "") {

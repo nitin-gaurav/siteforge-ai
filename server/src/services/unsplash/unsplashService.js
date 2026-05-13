@@ -245,6 +245,10 @@ export async function searchUnsplashImage(query, index = 0) {
 }
 
 async function resolveGraphicImage(query, index) {
+  if (isLogoQuery(query) && index > 1) {
+    return logoPlaceholderImage(query, index);
+  }
+
   try {
     const generatedImage = await generateGeminiImage(query, index);
     if (generatedImage) return generatedImage;

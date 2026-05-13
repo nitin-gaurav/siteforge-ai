@@ -59,7 +59,6 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 GEMINI_API_KEY=your_gemini_api_key
 GEMINI_MODEL=gemini-2.5-flash
 GEMINI_IMAGE_MODEL=gemini-2.5-flash-image
-UNSPLASH_ACCESS_KEY=your_unsplash_access_key
 CLIENT_URL=https://your-vercel-domain.vercel.app
 ```
 

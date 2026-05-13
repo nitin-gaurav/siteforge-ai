@@ -1,5 +1,5 @@
 import { generateWebsite } from "../services/gemini/geminiService.js";
-import { resolveSectionImages } from "../services/unsplash/unsplashService.js";
+import { resolveSectionImages } from "../services/gemini/geminiImageResolver.js";
 
 export async function generateSite(req, res) {
   const prompt = req.body.prompt?.trim();

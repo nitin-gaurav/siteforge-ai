@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { randomUUID } from "crypto";
-import { resolveSectionImages } from "../unsplash/unsplashService.js";
+import { resolveSectionImages } from "./geminiImageResolver.js";
 
 function promptKind(prompt = "") {
   const lowerPrompt = prompt.toLowerCase();

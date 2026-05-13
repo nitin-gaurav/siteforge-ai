@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173",
-    "build": "vite build",
+    "build": "vite build && node -e \"const fs=require('fs'); fs.rmSync('client/dist',{recursive:true,force:true}); fs.mkdirSync('client',{recursive:true}); fs.cpSync('dist','client/dist',{recursive:true});\"",
     "preview": "vite preview --host 127.0.0.1 --port 4173"
   },
   "dependencies": {

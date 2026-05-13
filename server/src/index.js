@@ -14,7 +14,8 @@ const port = process.env.PORT || 4000;
 const defaultAllowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  "https://siteforgeapp.vercel.app"
+  "https://siteforgeapp.vercel.app",
+  "https://siteforge-g01n7ecty-nitin-gauravs-projects.vercel.app"
 ];
 
 const configuredAllowedOrigins = [
@@ -38,9 +39,10 @@ function isAllowedOrigin(origin) {
   const normalizedOrigin = origin.replace(/\/+$/, "");
   if (allowedOrigins.has(normalizedOrigin)) return true;
 
-  // Allow Vercel preview deployments for this app (e.g. siteforgeapp-git-branch.vercel.app)
-  // so preview URLs can talk to the same backend without manual env updates.
+  // Allow Vercel preview deployments for this app so preview URLs can talk to
+  // the same backend without manual env updates.
   if (/^https:\/\/siteforgeapp(?:-[a-z0-9-]+)?\.vercel\.app$/i.test(normalizedOrigin)) return true;
+  if (/^https:\/\/siteforge-[a-z0-9-]+-nitin-gauravs-projects\.vercel\.app$/i.test(normalizedOrigin)) return true;
 
   return false;
 }

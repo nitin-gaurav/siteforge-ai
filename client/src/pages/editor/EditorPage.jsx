@@ -127,8 +127,9 @@ export default function EditorPage() {
 
     api
       .generateImages(store.prompt || store.name || "website visual", store.sections, {
-        websiteImageBudget: 5,
-        logoImageBudget: 3
+        websiteImageBudget: 3,
+        logoImageBudget: 3,
+        graphicsOnly: true
       })
       .then(async ({ sections }) => {
         if (cancelled || !Array.isArray(sections) || !sections.length) return;

@@ -32,8 +32,9 @@ export async function generateImages(req, res) {
   }
 
   const resolvedSections = await resolveSectionImages(sections, prompt, {
-    websiteImageBudget: Number(options.websiteImageBudget ?? 5),
-    logoImageBudget: Number(options.logoImageBudget ?? 3)
+    websiteImageBudget: Number(options.websiteImageBudget ?? 3),
+    logoImageBudget: Number(options.logoImageBudget ?? 3),
+    graphicsOnly: options.graphicsOnly ?? true
   });
   res.json({ sections: resolvedSections });
 }

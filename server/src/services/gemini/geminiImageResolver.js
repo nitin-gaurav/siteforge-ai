@@ -5,10 +5,10 @@ const renderImageSectionTypes = new Set(["hero", "about", "features", "graphics"
 const defaultWebsiteImageBudget = Number(process.env.GEMINI_WEBSITE_IMAGE_BUDGET || 0);
 const defaultLogoImageBudget = Number(process.env.GEMINI_LOGO_IMAGE_BUDGET || 3);
 const sectionPriority = {
-  hero: 0,
-  about: 1,
-  features: 2,
-  graphics: 3,
+  graphics: 0,
+  hero: 1,
+  about: 2,
+  features: 3,
   testimonial: 4,
   sidebar: 5,
   cta: 6
@@ -159,11 +159,16 @@ function shouldRegenerateImage(image) {
   return !image.url.startsWith("data:image/") || credit.includes("unsplash") || credit.startsWith("local fallback");
 }
 
+function keepExistingImage(image, query) {
+  return image && !shouldRegenerateImage(image) ? { ...image, query } : undefined;
+}
+
 export async function resolveSectionImages(sections, prompt, options = {}) {
   const budgets = {
     websiteImageBudget: options.websiteImageBudget ?? defaultWebsiteImageBudget,
     logoImageBudget: options.logoImageBudget ?? defaultLogoImageBudget
   };
+  const graphicsOnly = options.graphicsOnly ?? true;
   const generatedCount = { count: 0 };
   const resolvedSections = [...sections];
   const sectionOrder = sections
@@ -192,18 +197,25 @@ export async function resolveSectionImages(sections, prompt, options = {}) {
         }
       }
 
-      if (!isGraphicsSection && !renderImageSectionTypes.has(section.type)) {
+      if (graphicsOnly && !isGraphicsSection) {
         resolvedSections[index] = {
           ...section,
           items,
-          image: section.image ? { ...section.image, query } : undefined
+          image: keepExistingImage(section.image, query)
         };
         continue;
       }
 
-      const existingImage = section.image && !shouldRegenerateImage(section.image)
-        ? { ...section.image, query }
-        : null;
+      if (!isGraphicsSection && !renderImageSectionTypes.has(section.type)) {
+        resolvedSections[index] = {
+          ...section,
+          items,
+          image: keepExistingImage(section.image, query)
+        };
+        continue;
+      }
+
+      const existingImage = keepExistingImage(section.image, query);
       const image = existingImage || (isGraphicsSection && Array.isArray(items)
         ? items.find((item) => item?.image?.url)?.image
         : null) || await resolveBudgetedImage(query, index, generatedCount, budgets);

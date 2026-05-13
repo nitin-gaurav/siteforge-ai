@@ -5,13 +5,13 @@ const renderImageSectionTypes = new Set(["hero", "about", "features", "graphics"
 const defaultWebsiteImageBudget = Number(process.env.GEMINI_WEBSITE_IMAGE_BUDGET || 0);
 const defaultLogoImageBudget = Number(process.env.GEMINI_LOGO_IMAGE_BUDGET || 3);
 const sectionPriority = {
-  graphics: 0,
-  hero: 1,
-  about: 2,
-  features: 3,
-  testimonial: 4,
+  hero: 0,
+  about: 1,
+  features: 2,
+  testimonial: 3,
+  cta: 4,
   sidebar: 5,
-  cta: 6
+  graphics: 6,
 };
 
 function cleanLabel(query = "") {
@@ -168,7 +168,7 @@ export async function resolveSectionImages(sections, prompt, options = {}) {
     websiteImageBudget: options.websiteImageBudget ?? defaultWebsiteImageBudget,
     logoImageBudget: options.logoImageBudget ?? defaultLogoImageBudget
   };
-  const graphicsOnly = options.graphicsOnly ?? true;
+  const graphicsOnly = options.graphicsOnly ?? false;
   const generatedCount = { count: 0 };
   const resolvedSections = [...sections];
   const sectionOrder = sections

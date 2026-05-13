@@ -32,8 +32,8 @@ export async function generateImages(req, res) {
   }
 
   const resolvedSections = await resolveSectionImages(sections, prompt, {
-    websiteImageBudget: Number(options.websiteImageBudget ?? 3),
-    logoImageBudget: Number(options.logoImageBudget ?? 1)
+    websiteImageBudget: Number(options.websiteImageBudget ?? 5),
+    logoImageBudget: Number(options.logoImageBudget ?? 3)
   });
   res.json({ sections: resolvedSections });
 }

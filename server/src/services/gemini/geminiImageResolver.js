@@ -3,7 +3,16 @@ import { generateGeminiImage } from "./geminiImageService.js";
 const imageCache = new Map();
 const renderImageSectionTypes = new Set(["hero", "about", "features", "graphics", "testimonial", "sidebar", "cta"]);
 const defaultWebsiteImageBudget = Number(process.env.GEMINI_WEBSITE_IMAGE_BUDGET || 0);
-const defaultLogoImageBudget = Number(process.env.GEMINI_LOGO_IMAGE_BUDGET || 1);
+const defaultLogoImageBudget = Number(process.env.GEMINI_LOGO_IMAGE_BUDGET || 3);
+const sectionPriority = {
+  hero: 0,
+  about: 1,
+  features: 2,
+  graphics: 3,
+  testimonial: 4,
+  sidebar: 5,
+  cta: 6
+};
 
 function cleanLabel(query = "") {
   return (query || "Generated website image")
@@ -156,31 +165,40 @@ export async function resolveSectionImages(sections, prompt, options = {}) {
     logoImageBudget: options.logoImageBudget ?? defaultLogoImageBudget
   };
   const generatedCount = { count: 0 };
+  const resolvedSections = [...sections];
+  const sectionOrder = sections
+    .map((section, index) => ({ section, index }))
+    .sort((first, second) => (sectionPriority[first.section.type] ?? 99) - (sectionPriority[second.section.type] ?? 99));
 
-  return Promise.all(
-    sections.map(async (section, index) => {
+  for (const { section, index } of sectionOrder) {
       const isGraphicsSection = section.type === "graphics";
       const query = section.image?.query || section.imageQuery || `${prompt} ${section.title || section.type || "website"}`;
       const items = Array.isArray(section.items)
-        ? await Promise.all(
-            section.items.map(async (item, itemIndex) => {
-              if (!isGraphicsSection) return item;
-
-              const itemQuery = item.image?.query || `${prompt} ${item.title || "business graphic"} generated visual`;
-              const image = shouldRegenerateImage(item.image)
-                ? await resolveBudgetedImage(itemQuery, index + itemIndex + 1, generatedCount, budgets)
-                : { ...item.image, query: itemQuery };
-              return { ...item, image };
-            })
-          )
+        ? []
         : section.items;
 
+      if (Array.isArray(section.items)) {
+        for (const [itemIndex, item] of section.items.entries()) {
+          if (!isGraphicsSection) {
+            items.push(item);
+            continue;
+          }
+
+          const itemQuery = item.image?.query || `${prompt} ${item.title || "business graphic"} generated visual`;
+          const image = shouldRegenerateImage(item.image)
+            ? await resolveBudgetedImage(itemQuery, index + itemIndex + 1, generatedCount, budgets)
+            : { ...item.image, query: itemQuery };
+          items.push({ ...item, image });
+        }
+      }
+
       if (!isGraphicsSection && !renderImageSectionTypes.has(section.type)) {
-        return {
+        resolvedSections[index] = {
           ...section,
           items,
           image: section.image ? { ...section.image, query } : undefined
         };
+        continue;
       }
 
       const existingImage = section.image && !shouldRegenerateImage(section.image)
@@ -190,11 +208,12 @@ export async function resolveSectionImages(sections, prompt, options = {}) {
         ? items.find((item) => item?.image?.url)?.image
         : null) || await resolveBudgetedImage(query, index, generatedCount, budgets);
 
-      return {
+      resolvedSections[index] = {
         ...section,
         items,
         image
       };
-    })
-  );
+  }
+
+  return resolvedSections;
 }

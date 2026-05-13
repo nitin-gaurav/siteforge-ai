@@ -73,8 +73,8 @@ export default function EditorPage() {
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState(null);
   const store = useEditorStore();
-  const sidebarWidthClass = sidebarExpanded ? "w-[520px]" : "w-[300px]";
-  const sidebarMinWidthClass = sidebarExpanded ? "min-w-[520px]" : "min-w-[300px]";
+  const sidebarWidthClass = sidebarExpanded ? "lg:w-[520px]" : "lg:w-[300px]";
+  const sidebarMinWidthClass = sidebarExpanded ? "lg:min-w-[520px]" : "lg:min-w-[300px]";
 
   useEffect(() => {
     let cancelled = false;
@@ -220,14 +220,14 @@ export default function EditorPage() {
   }
 
   return (
-    <main className="flex h-screen overflow-hidden bg-panel text-ink">
+    <main className="flex min-h-screen flex-col overflow-x-hidden bg-panel text-ink lg:h-screen lg:flex-row lg:overflow-hidden">
       <aside
-        className={`relative flex h-full shrink-0 flex-col border-r border-[#e5e0f6] bg-white transition-[width] duration-300 ease-spring ${
+        className={`relative flex w-full shrink-0 flex-col border-b border-[#e5e0f6] bg-white transition-[width] duration-300 ease-spring lg:h-full lg:border-b-0 lg:border-r ${
           sidebarWidthClass
         }`}
       >
-        <div className={`flex h-full ${sidebarMinWidthClass} flex-col overflow-hidden`}>
-        <div className="border-b border-[#eee9fb] px-4 py-4">
+        <div className={`flex w-full ${sidebarMinWidthClass} flex-col overflow-hidden lg:h-full`}>
+        <div className="border-b border-[#eee9fb] px-4 py-4 sm:px-5">
           <div className="mb-4 flex items-center gap-3">
             <Link to="/" className="flex min-w-0 flex-1 items-center gap-3" aria-label="SiteForge AI home">
               <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#5b4bd1] text-white shadow-sm">
@@ -243,7 +243,7 @@ export default function EditorPage() {
             <button
               type="button"
               onClick={() => setSidebarExpanded((expanded) => !expanded)}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#e5e0f6] bg-white text-slate-700 transition hover:bg-[#f4f6fb] hover:text-accent"
+              className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#e5e0f6] bg-white text-slate-700 transition hover:bg-[#f4f6fb] hover:text-accent lg:flex"
               aria-label={sidebarExpanded ? "Shrink editor panel" : "Expand editor panel"}
               title={sidebarExpanded ? "Shrink editor panel" : "Expand editor panel"}
             >
@@ -269,7 +269,7 @@ export default function EditorPage() {
           </div>
         </div>
 
-        <div className="border-b border-[#eee9fb] bg-white p-4">
+        <div className="border-b border-[#eee9fb] bg-white p-4 sm:p-5">
           <div className={`grid gap-3 ${sidebarExpanded ? "grid-cols-[minmax(0,1fr)_140px] items-end" : ""}`}>
             <Input label="Project name" value={store.name} onChange={(event) => store.setName(event.target.value)} />
             <Button className="w-full rounded-xl shadow-sm" loading={store.status === "saving"} onClick={saveProject}>
@@ -280,7 +280,7 @@ export default function EditorPage() {
           {error ? <p className="mt-3 rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p> : null}
         </div>
 
-        <div className="border-b border-[#eee9fb] bg-white px-3 py-3">
+        <div className="border-b border-[#eee9fb] bg-white px-3 py-3 sm:px-4">
           <div className="grid grid-cols-3 gap-1 rounded-xl bg-[#f4f1ff] p-1">
             {[
               ["build", Wand2, "Build"],
@@ -301,7 +301,7 @@ export default function EditorPage() {
           </div>
         </div>
 
-        <div className={`min-h-0 overflow-y-auto bg-[#fbfaff] ${activePanel === "build" ? "" : "flex-1"}`}>
+        <div className={`min-h-0 bg-[#fbfaff] lg:overflow-y-auto ${activePanel === "build" ? "" : "flex-1"}`}>
           {activePanel === "build" ? (
             <PromptPanel
               prompt={store.prompt}
@@ -324,7 +324,7 @@ export default function EditorPage() {
         </div>
 
         {activePanel === "build" ? (
-          <div className="bg-[#fbfaff] px-4 pb-4 pt-2">
+          <div className="bg-[#fbfaff] px-4 pb-4 pt-2 sm:px-5">
             <Button
               onClick={generateSite}
               loading={store.status === "generating"}
@@ -348,7 +348,7 @@ export default function EditorPage() {
         </div>
       </aside>
 
-      <section className="min-w-0 flex-1 p-3">
+      <section className="min-h-[70vh] min-w-0 flex-1 p-3 sm:p-4 lg:min-h-0">
         <WebsitePreview sections={store.sections} theme={store.theme} loading={store.status === "loading"} />
       </section>
       <AiWebsiteAssistant

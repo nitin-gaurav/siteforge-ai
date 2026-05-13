@@ -99,7 +99,7 @@ export default function AiWebsiteAssistant({ project, onApplyUpdates }) {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex max-w-[calc(100vw-2.5rem)] flex-col items-end gap-3">
+    <div className="fixed bottom-4 right-3 z-50 flex max-w-[calc(100vw-1.5rem)] flex-col items-end gap-3 sm:bottom-5 sm:right-5 sm:max-w-[calc(100vw-2.5rem)]">
       <div
         className={`w-[380px] max-w-full origin-bottom-right overflow-hidden rounded-2xl border border-white/80 bg-[#fbfaff]/95 shadow-[0_22px_70px_rgba(24,31,54,0.22)] backdrop-blur-xl transition-all duration-300 ease-spring ${
           open ? "translate-y-0 scale-100 opacity-100" : "pointer-events-none translate-y-4 scale-95 opacity-0"
@@ -197,7 +197,7 @@ export default function AiWebsiteAssistant({ project, onApplyUpdates }) {
           setOpen((nextOpen) => !nextOpen);
           window.setTimeout(() => inputRef.current?.focus(), 80);
         }}
-        className="group flex min-h-12 items-center gap-2 rounded-full bg-ink px-4 py-3 text-sm font-black text-white shadow-[0_16px_45px_rgba(13,17,23,0.28)] transition hover:-translate-y-0.5 hover:bg-[#171d29]"
+        className="group flex min-h-11 items-center gap-2 rounded-full bg-ink px-3.5 py-2.5 text-xs font-black text-white shadow-[0_16px_45px_rgba(13,17,23,0.28)] transition hover:-translate-y-0.5 hover:bg-[#171d29] sm:min-h-12 sm:px-4 sm:py-3 sm:text-sm"
       >
         <span className="grid h-7 w-7 place-items-center rounded-full bg-white/12 transition group-hover:bg-white/18">
           <Sparkles className="h-4 w-4" />

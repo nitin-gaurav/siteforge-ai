@@ -95,6 +95,7 @@ export default function AppShell({ children }) {
   const [profileOpen, setProfileOpen] = useState(false);
   const [recentOpen, setRecentOpen] = useState(true);
   const [recentLoading, setRecentLoading] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
   const [recentProjects, setRecentProjects] = useState(() => readRecentProjectCache());
   const profileMenuRef = useRef(null);
   const mobileProfileMenuRef = useRef(null);
@@ -150,10 +151,11 @@ export default function AppShell({ children }) {
   }, []);
 
   function signOut() {
+    setSigningOut(true);
     setProfileOpen(false);
     localStorage.removeItem(recentProjectStorageKey);
     localStorage.removeItem(recentProjectCacheKey);
-    navigate("/login", { replace: true });
+    window.setTimeout(() => navigate("/login", { replace: true }), 120);
 
     supabase.auth.signOut().catch((error) => {
       console.error("Sign out failed", error);
@@ -161,7 +163,7 @@ export default function AppShell({ children }) {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f2fb] text-ink">
+    <div className={`min-h-screen bg-[#f4f2fb] text-ink transition-opacity duration-150 ${signingOut ? "opacity-0" : "opacity-100"}`}>
       <aside
         className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-[#d9d3f2] bg-white transition-[width] duration-300 ease-spring lg:flex ${
           sidebarOpen ? "w-[260px]" : "w-16"

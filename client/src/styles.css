@@ -162,6 +162,28 @@ textarea {
   }
 }
 
+@media (max-width: 640px) {
+  .auth-shell {
+    animation-duration: 0.52s;
+  }
+
+  .auth-panel-left {
+    animation-duration: 0.56s;
+  }
+
+  .auth-stagger {
+    animation-duration: 0.44s;
+  }
+
+  .auth-float-orb {
+    opacity: 0.45;
+  }
+
+  .auth-particle {
+    display: none;
+  }
+}
+
 .auth-stagger {
   animation: authLiftIn 0.68s cubic-bezier(0.16, 1, 0.3, 1) both;
 }

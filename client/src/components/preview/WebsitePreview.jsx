@@ -67,19 +67,19 @@ export default function WebsitePreview({ sections, theme, loading = false }) {
   }, []);
 
   return (
-    <div className="flex h-full min-w-0 flex-col overflow-hidden rounded-[24px] border border-white/75 bg-white/72 shadow-[0_24px_70px_rgba(77,63,148,0.16)] backdrop-blur-xl">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#eee9fb] bg-white/72 px-4 py-3">
+    <div className="flex h-full min-h-[620px] min-w-0 flex-col overflow-hidden rounded-[20px] border border-white/75 bg-white/72 shadow-[0_24px_70px_rgba(77,63,148,0.16)] backdrop-blur-xl lg:min-h-0 lg:rounded-[24px]">
+      <div className="flex flex-col gap-3 border-b border-[#eee9fb] bg-white/72 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-slate-500">Responsive preview</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-slate-500 sm:text-xs sm:tracking-[0.16em]">Responsive preview</p>
           <p className="truncate text-sm font-semibold text-ink">preview.siteforge.local</p>
         </div>
-        <div className="grid grid-cols-3 gap-1 rounded-2xl bg-[#f0eefb] p-1.5">
+        <div className="grid w-full grid-cols-3 gap-1 rounded-2xl bg-[#f0eefb] p-1.5 sm:w-auto">
           {Object.entries(viewports).map(([key, item]) => {
             const Icon = item.icon;
             return (
               <button
                 key={key}
-                className={`flex h-9 items-center justify-center gap-2 rounded-xl px-3 text-sm font-bold transition ${
+                className={`flex h-9 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-bold transition sm:gap-2 sm:px-3 sm:text-sm ${
                   viewport === key ? "bg-white text-accent shadow-[0_8px_20px_rgba(77,63,148,0.12)]" : "text-slate-600 hover:bg-white/70"
                 }`}
                 onClick={() => setViewport(key)}
@@ -93,7 +93,7 @@ export default function WebsitePreview({ sections, theme, loading = false }) {
         </div>
       </div>
 
-      <div ref={canvasRef} className="checkerboard min-h-0 flex-1 overflow-hidden bg-[#f7f4ff] p-2">
+      <div ref={canvasRef} className="checkerboard min-h-0 flex-1 overflow-hidden bg-[#f7f4ff] p-2 sm:p-3">
         <div className="flex h-full justify-center overflow-hidden">
           <div
             className="origin-top transition-all duration-300 ease-spring"

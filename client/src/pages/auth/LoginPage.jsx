@@ -64,25 +64,25 @@ export default function LoginPage() {
       <div className="auth-particle auth-particle-two" />
       <div className="auth-particle auth-particle-three" />
 
-      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-5 sm:px-6 sm:py-8">
+      <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-3 py-4 sm:px-6 sm:py-8">
         <section
           className={`auth-shell ${
             isSignin ? "auth-mode-signin" : "auth-mode-signup"
-          } grid w-full max-w-6xl overflow-hidden rounded-[28px] bg-white shadow-[0_26px_76px_rgba(58,48,112,0.14)] lg:min-h-[600px] lg:grid-cols-2`}
+          } grid w-full max-w-6xl overflow-hidden rounded-[22px] bg-white shadow-[0_26px_76px_rgba(58,48,112,0.14)] sm:rounded-[28px] lg:min-h-[600px] lg:grid-cols-2`}
         >
-          <div className="auth-panel-left flex flex-col justify-center px-6 py-8 sm:px-10 lg:px-16">
-            <div className="auth-stagger mb-6 flex items-center justify-center gap-3">
-              <span className="auth-logo-badge flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f3f1fb] text-[#5648c8] shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
-                <Sparkles className="h-5 w-5" />
+          <div className="auth-panel-left flex flex-col justify-center px-5 py-7 sm:px-10 lg:px-16">
+            <div className="auth-stagger mb-5 flex items-center justify-center gap-3 sm:mb-6">
+              <span className="auth-logo-badge flex h-10 w-10 items-center justify-center rounded-2xl bg-[#f3f1fb] text-[#5648c8] shadow-sm transition-transform duration-200 hover:-translate-y-0.5 sm:h-11 sm:w-11">
+                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
               </span>
               <div>
-                <p className="auth-brand-shimmer font-display text-lg font-black">SiteForge AI</p>
+                <p className="auth-brand-shimmer font-display text-base font-black sm:text-lg">SiteForge AI</p>
                 <p className="text-xs font-bold text-muted">AI website builder workspace</p>
               </div>
             </div>
 
             <div className="mx-auto w-full max-w-sm">
-              <div className="auth-stagger relative mb-6 grid grid-cols-2 rounded-2xl bg-[#f3f1fb] p-1.5">
+              <div className="auth-stagger relative mb-5 grid grid-cols-2 rounded-2xl bg-[#f3f1fb] p-1.5 sm:mb-6">
                 <span
                   className={`absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl bg-white shadow-[0_10px_26px_rgba(77,63,148,0.14)] transition-transform duration-300 ease-spring ${
                     isSignin ? "translate-x-0" : "translate-x-[calc(100%+6px)]"
@@ -96,7 +96,7 @@ export default function LoginPage() {
                     key={nextMode}
                     type="button"
                     onClick={() => switchMode(nextMode)}
-                    className={`relative z-10 h-11 rounded-xl text-sm font-black transition-colors duration-200 ${
+                    className={`relative z-10 h-10 rounded-xl text-sm font-black transition-colors duration-200 sm:h-11 ${
                       mode === nextMode
                         ? "text-ink"
                         : "text-slate-500 hover:text-ink"
@@ -108,7 +108,7 @@ export default function LoginPage() {
               </div>
 
               <header key={mode} className="auth-mode-swap text-center">
-                <h1 className="font-display text-3xl font-black tracking-normal">
+                <h1 className="font-display text-2xl font-black tracking-normal sm:text-3xl">
                   {isSignin ? "Welcome back" : "Create account"}
                 </h1>
                 <p className="mt-2 text-sm font-semibold leading-6 text-muted">
@@ -118,7 +118,7 @@ export default function LoginPage() {
                 </p>
               </header>
 
-              <form onSubmit={submit} className="auth-stagger mt-6 grid gap-4">
+              <form onSubmit={submit} className="auth-stagger mt-5 grid gap-3.5 sm:mt-6 sm:gap-4">
                 <div className="auth-form-row relative">
                   <Mail className="auth-input-icon pointer-events-none absolute left-5 top-[1.05rem] h-4 w-4 text-ink" />
                   <Input
@@ -128,7 +128,7 @@ export default function LoginPage() {
                     onChange={(event) => setEmail(event.target.value)}
                     required
                     placeholder="Email address"
-                    className="h-[52px] rounded-2xl border border-transparent bg-[#f3f1fb] pl-12 font-semibold placeholder:text-slate-500/80 transition-all duration-200 hover:bg-[#efecf8] focus:border-[#6657dc] focus:bg-white focus:ring-4 focus:ring-[#6657dc]/12"
+                    className="h-12 rounded-2xl border border-transparent bg-[#f3f1fb] pl-12 font-semibold placeholder:text-slate-500/80 transition-all duration-200 hover:bg-[#efecf8] focus:border-[#6657dc] focus:bg-white focus:ring-4 focus:ring-[#6657dc]/12 sm:h-[52px]"
                   />
                 </div>
 
@@ -141,7 +141,7 @@ export default function LoginPage() {
                     onChange={(event) => setPassword(event.target.value)}
                     required
                     placeholder="Password"
-                    className="h-[52px] rounded-2xl border border-transparent bg-[#f3f1fb] pl-12 font-semibold placeholder:text-slate-500/80 transition-all duration-200 hover:bg-[#efecf8] focus:border-[#6657dc] focus:bg-white focus:ring-4 focus:ring-[#6657dc]/12"
+                    className="h-12 rounded-2xl border border-transparent bg-[#f3f1fb] pl-12 font-semibold placeholder:text-slate-500/80 transition-all duration-200 hover:bg-[#efecf8] focus:border-[#6657dc] focus:bg-white focus:ring-4 focus:ring-[#6657dc]/12 sm:h-[52px]"
                   />
                 </div>
 
@@ -160,7 +160,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
-                  className="auth-submit mx-auto mt-1 h-[52px] min-w-40 rounded-2xl bg-[#5b4bd1] px-8 text-sm shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#4f41bd] hover:shadow-md"
+                  className="auth-submit mx-auto mt-1 h-12 min-w-36 rounded-2xl bg-[#5b4bd1] px-7 text-sm shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#4f41bd] hover:shadow-md sm:h-[52px] sm:min-w-40 sm:px-8"
                   loading={loading}
                 >
                   {isSignin ? "Login now" : "Create account"}

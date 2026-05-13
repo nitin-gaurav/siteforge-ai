@@ -2,8 +2,8 @@ import { generateGeminiImage } from "./geminiImageService.js";
 
 const imageCache = new Map();
 const renderImageSectionTypes = new Set(["hero", "about", "features", "graphics", "testimonial", "sidebar", "cta"]);
-const websiteImageBudget = Number(process.env.GEMINI_WEBSITE_IMAGE_BUDGET || 3);
-const logoImageBudget = Number(process.env.GEMINI_LOGO_IMAGE_BUDGET || 1);
+const defaultWebsiteImageBudget = Number(process.env.GEMINI_WEBSITE_IMAGE_BUDGET || 0);
+const defaultLogoImageBudget = Number(process.env.GEMINI_LOGO_IMAGE_BUDGET || 1);
 
 function cleanLabel(query = "") {
   return (query || "Generated website image")
@@ -130,13 +130,13 @@ async function resolveGeminiImage(query, index) {
   return image;
 }
 
-function shouldUseGeminiImage(query, generatedCount) {
-  const budget = isLogoQuery(query) ? logoImageBudget : websiteImageBudget;
+function shouldUseGeminiImage(query, generatedCount, budgets) {
+  const budget = isLogoQuery(query) ? budgets.logoImageBudget : budgets.websiteImageBudget;
   return generatedCount.count < budget;
 }
 
-async function resolveBudgetedImage(query, index, generatedCount) {
-  if (!shouldUseGeminiImage(query, generatedCount)) {
+async function resolveBudgetedImage(query, index, generatedCount, budgets) {
+  if (!shouldUseGeminiImage(query, generatedCount, budgets)) {
     return fallbackImage(query, index);
   }
 
@@ -146,10 +146,15 @@ async function resolveBudgetedImage(query, index, generatedCount) {
 
 function shouldRegenerateImage(image) {
   if (!image?.url) return true;
-  return !image.url.startsWith("data:image/") || image.credit?.toLowerCase().includes("unsplash");
+  const credit = image.credit?.toLowerCase() || "";
+  return !image.url.startsWith("data:image/") || credit.includes("unsplash") || credit.startsWith("local fallback");
 }
 
-export async function resolveSectionImages(sections, prompt) {
+export async function resolveSectionImages(sections, prompt, options = {}) {
+  const budgets = {
+    websiteImageBudget: options.websiteImageBudget ?? defaultWebsiteImageBudget,
+    logoImageBudget: options.logoImageBudget ?? defaultLogoImageBudget
+  };
   const generatedCount = { count: 0 };
 
   return Promise.all(
@@ -163,7 +168,7 @@ export async function resolveSectionImages(sections, prompt) {
 
               const itemQuery = item.image?.query || `${prompt} ${item.title || "business graphic"} generated visual`;
               const image = shouldRegenerateImage(item.image)
-                ? await resolveBudgetedImage(itemQuery, index + itemIndex + 1, generatedCount)
+                ? await resolveBudgetedImage(itemQuery, index + itemIndex + 1, generatedCount, budgets)
                 : { ...item.image, query: itemQuery };
               return { ...item, image };
             })
@@ -183,7 +188,7 @@ export async function resolveSectionImages(sections, prompt) {
         : null;
       const image = existingImage || (isGraphicsSection && Array.isArray(items)
         ? items.find((item) => item?.image?.url)?.image
-        : null) || await resolveBudgetedImage(query, index, generatedCount);
+        : null) || await resolveBudgetedImage(query, index, generatedCount, budgets);
 
       return {
         ...section,

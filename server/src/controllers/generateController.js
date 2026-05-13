@@ -17,6 +17,7 @@ export async function generateSite(req, res) {
 export async function generateImages(req, res) {
   const prompt = req.body.prompt?.trim();
   const sections = Array.isArray(req.body.sections) ? req.body.sections : [];
+  const options = req.body.options && typeof req.body.options === "object" ? req.body.options : {};
 
   if (!prompt) {
     const error = new Error("Prompt is required");
@@ -30,6 +31,9 @@ export async function generateImages(req, res) {
     throw error;
   }
 
-  const resolvedSections = await resolveSectionImages(sections, prompt);
+  const resolvedSections = await resolveSectionImages(sections, prompt, {
+    websiteImageBudget: Number(options.websiteImageBudget ?? 3),
+    logoImageBudget: Number(options.logoImageBudget ?? 1)
+  });
   res.json({ sections: resolvedSections });
 }

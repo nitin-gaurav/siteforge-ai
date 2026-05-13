@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Download, Home, LayoutDashboard, Maximize2, Minimize2, Palette, Save, ScrollText, Sparkles, Wand2 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import AiWebsiteAssistant from "../../components/editor/AiWebsiteAssistant.jsx";
 import PromptPanel from "../../components/editor/PromptPanel.jsx";
@@ -66,12 +65,20 @@ function pickReplacementSection(targetSection, generatedSections) {
   return generatedSections.find((section) => section.type === targetSection.type) || generatedSections[0];
 }
 
+function hasLocalFallbackImages(sections = []) {
+  return sections.some((section) => {
+    if (section.image?.credit?.startsWith("Local fallback")) return true;
+    return section.items?.some((item) => item.image?.credit?.startsWith("Local fallback"));
+  });
+}
+
 export default function EditorPage() {
   const { projectId } = useParams();
   const [error, setError] = useState("");
   const [activePanel, setActivePanel] = useState("build");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [regeneratingId, setRegeneratingId] = useState(null);
+  const imageHydrationRef = useRef(new Set());
   const store = useEditorStore();
   const sidebarWidthClass = sidebarExpanded ? "lg:w-[520px]" : "lg:w-[300px]";
   const sidebarMinWidthClass = sidebarExpanded ? "lg:min-w-[520px]" : "lg:min-w-[300px]";
@@ -106,6 +113,42 @@ export default function EditorPage() {
       cancelled = true;
     };
   }, [projectId]);
+
+  useEffect(() => {
+    const activeProjectId = store.projectId || projectId;
+    if (!activeProjectId || store.status !== "idle" || !store.sections.length || !hasLocalFallbackImages(store.sections)) {
+      return;
+    }
+
+    if (imageHydrationRef.current.has(activeProjectId)) return;
+    imageHydrationRef.current.add(activeProjectId);
+
+    let cancelled = false;
+
+    api
+      .generateImages(store.prompt || store.name || "website visual", store.sections, {
+        websiteImageBudget: 3,
+        logoImageBudget: 1
+      })
+      .then(async ({ sections }) => {
+        if (cancelled || !Array.isArray(sections) || !sections.length) return;
+
+        store.setSections(sections);
+        await api.updateProject(activeProjectId, {
+          name: store.name,
+          prompt: store.prompt,
+          sections,
+          theme: store.theme
+        });
+      })
+      .catch((requestError) => {
+        console.warn("Image hydration failed", requestError);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [projectId, store.projectId, store.status, store.sections, store.prompt, store.name, store.theme]);
 
   async function generateSite() {
     if (!store.prompt.trim()) return;

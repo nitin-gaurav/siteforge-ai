@@ -8,7 +8,7 @@ config();
 config({ path: resolve(__dirname, "../../../.env"), override: false });
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_IMAGE_TIMEOUT_MS = Number(process.env.GEMINI_IMAGE_TIMEOUT_MS || 25000);
+const GEMINI_IMAGE_TIMEOUT_MS = Number(process.env.GEMINI_IMAGE_TIMEOUT_MS || 12000);
 const imageCache = new Map();
 
 let cachedFetch;
@@ -24,9 +24,7 @@ async function resolveFetch() {
 
 function imageModelCandidates() {
   return [...new Set([
-    "gemini-2.5-flash-image",
-    process.env.GEMINI_IMAGE_MODEL,
-    "gemini-3-pro-image-preview"
+    process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image"
   ]
     .filter(Boolean)
     .filter((modelName) => modelName !== process.env.GEMINI_MODEL))];
@@ -116,7 +114,7 @@ export async function generateGeminiImage(query, index = 0) {
             }
           ],
           generationConfig: {
-            responseModalities: ["Image"]
+            responseModalities: ["TEXT", "IMAGE"]
           }
         })
       });

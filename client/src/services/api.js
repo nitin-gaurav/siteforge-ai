@@ -103,6 +103,6 @@ export const api = {
   updateProject: (id, project) => request(`/projects/${id}`, { method: "PUT", body: JSON.stringify(project) }),
   deleteProject: (id) => request(`/projects/${id}`, { method: "DELETE" }),
   generateSite: (prompt) => request("/generate", { method: "POST", body: JSON.stringify({ prompt }) }),
-  generateImages: (prompt, sections) => request("/generate/images", { method: "POST", body: JSON.stringify({ prompt, sections }) }),
+  generateImages: (prompt, sections, options) => request("/generate/images", { method: "POST", body: JSON.stringify({ prompt, sections, options }) }),
   assistSite: (project, instruction) => request("/assistant", { method: "POST", body: JSON.stringify({ project, instruction }) })
 };

@@ -1030,9 +1030,9 @@ Keep body copy polished and specific. Make the content suitable for responsive l
 
 function modelCandidates() {
   return [...new Set([
+    "gemini-2.5-flash",
     process.env.GEMINI_MODEL,
     "gemini-2.5-pro",
-    "gemini-2.5-flash",
     "gemini-2.0-flash",
     "gemini-2.0-flash-lite",
     "gemini-1.5-flash-latest"

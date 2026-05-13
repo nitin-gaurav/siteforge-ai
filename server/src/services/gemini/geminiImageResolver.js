@@ -1,6 +1,9 @@
 import { generateGeminiImage } from "./geminiImageService.js";
 
 const imageCache = new Map();
+const renderImageSectionTypes = new Set(["hero", "about", "features", "graphics", "testimonial", "sidebar", "cta"]);
+const websiteImageBudget = Number(process.env.GEMINI_WEBSITE_IMAGE_BUDGET || 3);
+const logoImageBudget = Number(process.env.GEMINI_LOGO_IMAGE_BUDGET || 1);
 
 function cleanLabel(query = "") {
   return (query || "Generated website image")
@@ -127,12 +130,28 @@ async function resolveGeminiImage(query, index) {
   return image;
 }
 
+function shouldUseGeminiImage(query, generatedCount) {
+  const budget = isLogoQuery(query) ? logoImageBudget : websiteImageBudget;
+  return generatedCount.count < budget;
+}
+
+async function resolveBudgetedImage(query, index, generatedCount) {
+  if (!shouldUseGeminiImage(query, generatedCount)) {
+    return fallbackImage(query, index);
+  }
+
+  generatedCount.count += 1;
+  return resolveGeminiImage(query, index);
+}
+
 function shouldRegenerateImage(image) {
   if (!image?.url) return true;
   return !image.url.startsWith("data:image/") || image.credit?.toLowerCase().includes("unsplash");
 }
 
 export async function resolveSectionImages(sections, prompt) {
+  const generatedCount = { count: 0 };
+
   return Promise.all(
     sections.map(async (section, index) => {
       const isGraphicsSection = section.type === "graphics";
@@ -144,19 +163,27 @@ export async function resolveSectionImages(sections, prompt) {
 
               const itemQuery = item.image?.query || `${prompt} ${item.title || "business graphic"} generated visual`;
               const image = shouldRegenerateImage(item.image)
-                ? await resolveGeminiImage(itemQuery, index + itemIndex + 1)
+                ? await resolveBudgetedImage(itemQuery, index + itemIndex + 1, generatedCount)
                 : { ...item.image, query: itemQuery };
               return { ...item, image };
             })
           )
         : section.items;
 
+      if (!isGraphicsSection && !renderImageSectionTypes.has(section.type)) {
+        return {
+          ...section,
+          items,
+          image: section.image ? { ...section.image, query } : undefined
+        };
+      }
+
       const existingImage = section.image && !shouldRegenerateImage(section.image)
         ? { ...section.image, query }
         : null;
       const image = existingImage || (isGraphicsSection && Array.isArray(items)
         ? items.find((item) => item?.image?.url)?.image
-        : null) || await resolveGeminiImage(query, index);
+        : null) || await resolveBudgetedImage(query, index, generatedCount);
 
       return {
         ...section,

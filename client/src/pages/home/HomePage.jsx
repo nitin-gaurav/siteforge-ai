@@ -164,7 +164,6 @@ export default function HomePage() {
   const displayHeadline = `${headlinePrefix} - ${headlineSuffix}`;
   const loadingSteps = isImageMode ? imageLoadingSteps : websiteLoadingSteps;
   const loadingStepIndex = Math.min(Math.floor(elapsedSeconds / 8), loadingSteps.length - 1);
-  const loadingProgress = Math.min(92, 18 + loadingStepIndex * 18 + (elapsedSeconds % 8) * 2);
 
   useEffect(() => {
     setHeadlineIndex(0);
@@ -279,13 +278,7 @@ export default function HomePage() {
           <p className="mt-3 max-w-sm text-base font-semibold leading-7 text-muted">
             {loadingSteps[loadingStepIndex]}
           </p>
-          <div className="mt-7 w-full max-w-xs overflow-hidden rounded-full bg-slate-100">
-            <div
-              className="h-2 rounded-full bg-[#5b4bd1] transition-all duration-700 ease-out"
-              style={{ width: `${loadingProgress}%` }}
-            />
-          </div>
-          <p className="mt-3 text-sm font-semibold text-slate-500">
+          <p className="mt-5 text-sm font-semibold text-slate-500">
             {elapsedSeconds < 12
               ? "Keeping the request active..."
               : `Still working - ${elapsedSeconds}s elapsed. AI image generation can take a little longer.`}

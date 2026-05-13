@@ -10,14 +10,24 @@ config({ path: resolve(__dirname, "../../../.env"), override: false });
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
 const imageCache = new Map();
 
+let cachedFetch;
+
+async function resolveFetch() {
+  if (typeof fetch === "function") return fetch;
+  if (cachedFetch) return cachedFetch;
+
+  const mod = await import("node-fetch");
+  cachedFetch = mod.default || mod;
+  return cachedFetch;
+}
+
 function imageModelCandidates() {
   return [...new Set([
     process.env.GEMINI_IMAGE_MODEL,
+    process.env.GEMINI_MODEL,
     "gemini-3.1-flash-image-preview",
     "gemini-2.5-flash-image",
-    "gemini-3-pro-image-preview",
-    "gemini-2.0-flash-preview-image-generation",
-    "gemini-2.0-flash-exp-image-generation"
+    "gemini-3-pro-image-preview"
   ].filter(Boolean))];
 }
 
@@ -46,15 +56,31 @@ function buildImagePrompt(query = "") {
   ].join("\n");
 }
 
+function collectParts(payload) {
+  if (Array.isArray(payload?.candidates)) {
+    return payload.candidates.flatMap((candidate) => candidate?.content?.parts || []);
+  }
+
+  if (Array.isArray(payload?.response?.candidates)) {
+    return payload.response.candidates.flatMap((candidate) => candidate?.content?.parts || []);
+  }
+
+  if (Array.isArray(payload?.parts)) return payload.parts;
+  if (Array.isArray(payload?.response?.parts)) return payload.response.parts;
+  return [];
+}
+
 function extractInlineImage(payload) {
-  const parts = payload?.candidates?.flatMap((candidate) => candidate?.content?.parts || []) || [];
-  return parts.find((part) => part?.inlineData?.data);
+  const parts = collectParts(payload);
+  return parts.find((part) => part?.inlineData?.data || part?.inline_data?.data);
 }
 
 export async function generateGeminiImage(query, index = 0) {
   if (!process.env.GEMINI_API_KEY) {
     return null;
   }
+
+  const fetchFn = await resolveFetch();
 
   const cacheKey = `${query}:${index}`;
   if (imageCache.has(cacheKey)) {
@@ -68,7 +94,7 @@ export async function generateGeminiImage(query, index = 0) {
     url.searchParams.set("key", process.env.GEMINI_API_KEY);
 
     try {
-      const response = await fetch(url, {
+      const response = await fetchFn(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -85,7 +111,7 @@ export async function generateGeminiImage(query, index = 0) {
             }
           ],
           generationConfig: {
-            responseModalities: ["TEXT", "IMAGE"]
+            responseModalities: ["Image"]
           }
         })
       });
@@ -98,8 +124,8 @@ export async function generateGeminiImage(query, index = 0) {
       }
 
       const imagePart = extractInlineImage(payload);
-      const imageData = imagePart?.inlineData?.data;
-      const mimeType = imagePart?.inlineData?.mimeType || "image/png";
+      const imageData = imagePart?.inlineData?.data || imagePart?.inline_data?.data;
+      const mimeType = imagePart?.inlineData?.mimeType || imagePart?.inline_data?.mime_type || "image/png";
 
       if (!imageData) {
         errors.push(`${modelName}: no image returned`);

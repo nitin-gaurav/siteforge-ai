@@ -519,8 +519,8 @@ export default function SectionRenderer({ section, sections = [], theme }) {
 
           <div className="feature-card-grid mt-1 grid min-w-0 gap-4">
             {graphicItems.slice(0, 3).map((item, index) => {
-                const displayImage = isStockLogoImage(item.image, item) ? null : item.image;
-                const fallbackImage = index === 0 && image && !isStockLogoImage(image, item) ? image : null;
+                const displayImage = item.image;
+                const fallbackImage = index === 0 && image ? image : null;
                 const generatedLogoImage = isLogoGraphic(item) && !displayImage?.url && !fallbackImage?.url
                   ? logoPlaceholderImage(item, theme, index)
                   : null;

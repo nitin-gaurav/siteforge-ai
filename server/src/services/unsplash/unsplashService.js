@@ -247,8 +247,11 @@ export async function searchUnsplashImage(query, index = 0) {
 async function resolveGraphicImage(query, index) {
   const generatedImage = await generateGeminiImage(query, index);
   if (generatedImage) return generatedImage;
+
+  const stockImage = await searchUnsplashImage(query, index);
+  if (stockImage?.url) return stockImage;
   if (isLogoQuery(query)) return logoPlaceholderImage(query, index);
-  return searchUnsplashImage(query, index);
+  return stockImage;
 }
 
 export async function resolveSectionImages(sections, prompt) {

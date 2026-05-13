@@ -47,7 +47,7 @@ SiteForge AI simulates a lightweight AI-powered website builder SaaS product. Us
 | Backend | Node.js + Express | Simple REST API, easy AI service integration |
 | Database & Auth | Supabase (PostgreSQL) | Auth + DB in one, RLS for security |
 | AI Text | Google Gemini 2.5 Flash | Free tier, fast, good quality for content generation |
-| Images | Unsplash API | Dynamic contextual images based on AI-extracted keywords |
+| Images | Gemini image generation + Unsplash API | AI-generated graphics for visual sections, with contextual stock fallback |
 
 ---
 
@@ -371,9 +371,9 @@ VITE_API_URL=http://localhost:4000
 
 ### Server (`/server/.env`)
 ```env
-GEMINI_API_KEY_1=your_gemini_key_1
-GEMINI_API_KEY_2=your_gemini_key_2
-GEMINI_API_KEY_3=your_gemini_key_3
+GEMINI_API_KEY=your_gemini_key
+GEMINI_MODEL=gemini-2.5-flash
+GEMINI_IMAGE_MODEL=gemini-2.5-flash-image
 UNSPLASH_ACCESS_KEY=your_unsplash_key
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_KEY=your_service_role_key
@@ -393,8 +393,8 @@ The editor needs fast, frequent state updates (every keystroke in inline editing
 ### Why JSON sections over a component-based DB schema?
 Storing sections as JSONB gives us schema flexibility — new section types can be added without DB migrations. The tradeoff is less queryability on section internals, but since we always fetch complete projects, this is acceptable. This mirrors how Webflow stores page data internally.
 
-### Why Unsplash over Gemini image generation?
-Gemini's Imagen API requires Google Cloud billing and has strict rate limits. Unsplash provides high-quality, contextually relevant images instantly with generous free tier limits (50 requests/hour). The key insight: Gemini still drives image selection by generating specific search queries per section — making it "AI-powered image selection" rather than plain stock photos.
+### Why Gemini image generation plus Unsplash?
+Gemini powers AI-generated artwork for logo, brand, and graphics sections. Unsplash remains the fallback for photo-heavy website sections, so generated pages still get reliable contextual imagery when an AI graphic is not needed or generation fails.
 
 ## What We're Evaluating (Assignment Criteria Met)
 

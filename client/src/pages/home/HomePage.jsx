@@ -53,6 +53,53 @@ function projectNameFromPrompt(prompt) {
   return cleaned.length > 54 ? `${cleaned.slice(0, 51)}...` : cleaned;
 }
 
+function buildImageModeSections(prompt) {
+  const cleanPrompt = prompt.trim();
+  const baseQuery = cleanPrompt || "brand logo";
+
+  return [
+    {
+      type: "graphics",
+      title: "AI Image Generation",
+      eyebrow: "Logo concepts",
+      body: "Generated logo concepts and brand marks based on the image brief.",
+      image: {
+        query: `${baseQuery} square logo mark clean brand identity no mockup no banner`,
+        alt: "Generated logo concept"
+      },
+      items: [
+        {
+          title: "Primary Logo Concept",
+          meta: "Logo",
+          body: "A clean primary logo mark for the brand.",
+          image: {
+            query: `${baseQuery} square primary logo mark clean brand identity centered no mockup no long text`,
+            alt: "Primary logo concept"
+          }
+        },
+        {
+          title: "App Icon Concept",
+          meta: "App Icon",
+          body: "A compact app icon style symbol for small-format use.",
+          image: {
+            query: `${baseQuery} square app icon logo symbol simple centered high contrast no long text`,
+            alt: "App icon concept"
+          }
+        },
+        {
+          title: "Brand Mark Concept",
+          meta: "Brand Mark",
+          body: "A flexible visual mark for brand assets and social profiles.",
+          image: {
+            query: `${baseQuery} minimal brand mark logo symbol vector style centered no mockup`,
+            alt: "Brand mark concept"
+          }
+        }
+      ]
+    }
+  ];
+}
+
 function hasBusinessBrief(brief) {
   return [
     brief.businessName,
@@ -154,20 +201,17 @@ export default function HomePage() {
     setGenerating(true);
 
     try {
-      const generationPrompt = isImageMode
-        ? `${trimmedPrompt}\n\nCreate an AI Image Generation graphics section only. Generate 3 logo concepts for this business, not website sections. Each item must be a square logo or app-icon concept with a clean mark, brand-ready composition, no mockup scene, no website banner, no social post, no long text. Use meta labels like Logo, App Icon, Brand Mark.`
-        : trimmedPrompt;
-      const generated = await api.generateSite(generationPrompt);
-      const sections = isImageMode
-        ? (generated.sections || []).filter((section) => section.type === "graphics")
+      const generated = isImageMode ? null : await api.generateSite(trimmedPrompt);
+      const projectSections = isImageMode
+        ? (await api.generateImages(trimmedPrompt, buildImageModeSections(trimmedPrompt))).sections
         : generated.sections;
       const data = await api.createProject({
         name: isImageMode
           ? `AI Graphics - ${projectNameFromPrompt(trimmedPrompt)}`
           : generated.name || projectNameFromPrompt(trimmedPrompt),
         prompt: trimmedPrompt,
-        sections: Array.isArray(sections) && sections.length ? sections : Array.isArray(generated.sections) ? generated.sections : [],
-        theme: generated.theme || {}
+        sections: Array.isArray(projectSections) ? projectSections : [],
+        theme: generated?.theme || {}
       });
 
       navigate(`/editor/${data.project.id}`);

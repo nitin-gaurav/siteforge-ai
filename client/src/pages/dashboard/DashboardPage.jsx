@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ArrowRight, Clock, FolderOpen, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AppShell from "../../components/ui/AppShell.jsx";
 import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import { api } from "../../services/api.js";
+import { supabase } from "../../services/supabaseClient.js";
 
 function formatTimeAgo(date) {
   const now = Date.now();
@@ -171,6 +172,7 @@ function SkeletonCard() {
 }
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -182,12 +184,30 @@ export default function DashboardPage() {
   const renameDisabled = useMemo(() => !renameValue.trim() || !renameTarget, [renameTarget, renameValue]);
 
   useEffect(() => {
+    let cancelled = false;
+
     api
       .listProjects()
-      .then((data) => setProjects(data.projects || []))
-      .catch((requestError) => setError(requestError.message))
-      .finally(() => setLoading(false));
-  }, []);
+      .then((data) => {
+        if (!cancelled) setProjects(data.projects || []);
+      })
+      .catch(async (requestError) => {
+        if (cancelled) return;
+        if (requestError.status === 401) {
+          await supabase.auth.signOut();
+          navigate("/login", { replace: true });
+          return;
+        }
+        setError(requestError.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [navigate]);
 
   async function deleteProject(id) {
     const previousProjects = projects;

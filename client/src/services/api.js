@@ -43,15 +43,20 @@ async function authHeaders() {
   const {
     data: { session }
   } = await supabase.auth.getSession();
+  const expiresAt = session?.expires_at ? session.expires_at * 1000 : 0;
+  const shouldRefresh = expiresAt && expiresAt - Date.now() < 60000;
+  const activeSession = shouldRefresh
+    ? (await supabase.auth.refreshSession()).data.session || session
+    : session;
 
   return {
     "Content-Type": "application/json",
-    ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {})
+    ...(activeSession?.access_token ? { Authorization: `Bearer ${activeSession.access_token}` } : {})
   };
 }
 
 async function request(path, options = {}) {
-  const response = await fetch(`${API_URL}${path}`, {
+  const makeRequest = async () => fetch(`${API_URL}${path}`, {
     ...options,
     headers: {
       ...(await authHeaders()),
@@ -59,9 +64,17 @@ async function request(path, options = {}) {
     }
   });
 
+  let response = await makeRequest();
+  if (response.status === 401) {
+    await supabase.auth.refreshSession();
+    response = await makeRequest();
+  }
+
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    throw new Error(payload.error || "Request failed");
+    const error = new Error(payload.error || "Request failed");
+    error.status = response.status;
+    throw error;
   }
   return payload;
 }

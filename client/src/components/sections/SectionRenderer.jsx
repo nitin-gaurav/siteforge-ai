@@ -195,14 +195,69 @@ function safeFilename(value = "logo") {
 }
 
 function isLogoGraphic(item = {}) {
-  const text = `${item.title || ""} ${item.meta || ""} ${item.image?.query || ""}`.toLowerCase();
+  const text = `${item.title || ""} ${item.meta || ""} ${item.body || ""} ${item.image?.query || ""}`.toLowerCase();
   return text.includes("logo") || text.includes("app icon") || text.includes("brand mark");
 }
 
-function isStockLogoImage(image = {}) {
+function isStockLogoImage(image = {}, item = {}) {
   const url = image.url || "";
   const credit = image.credit || "";
-  return isLogoGraphic({ image }) && (url.includes("images.unsplash.com") || /unsplash/i.test(credit));
+  return isLogoGraphic(item) && (url.includes("images.unsplash.com") || /unsplash/i.test(credit));
+}
+
+function escapeSvgText(value = "") {
+  return `${value}`
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function logoPlaceholderImage(item = {}, theme = {}, index = 0) {
+  const primary = theme.primary || "#5b5ff4";
+  const accentColors = ["#12b981", "#f59e0b", "#38bdf8"];
+  const accent = accentColors[index % accentColors.length];
+  const label = item.meta || (index === 1 ? "App Icon" : index === 2 ? "Brand Mark" : "Logo");
+  const title = item.title || label;
+  const initials = title
+    .replace(/[^a-z0-9 ]/gi, " ")
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join("")
+    .toUpperCase() || "SF";
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+      <defs>
+        <linearGradient id="bg" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
+          <stop stop-color="${escapeSvgText(primary)}"/>
+          <stop offset="1" stop-color="#111827"/>
+        </linearGradient>
+        <linearGradient id="mark" x1="156" y1="132" x2="356" y2="360" gradientUnits="userSpaceOnUse">
+          <stop stop-color="#ffffff"/>
+          <stop offset="1" stop-color="${escapeSvgText(accent)}"/>
+        </linearGradient>
+        <filter id="shadow" x="-40%" y="-40%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#0f172a" flood-opacity="0.24"/>
+        </filter>
+      </defs>
+      <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+      <circle cx="108" cy="110" r="78" fill="#ffffff" opacity="0.12"/>
+      <circle cx="418" cy="394" r="98" fill="#ffffff" opacity="0.08"/>
+      <path d="M256 116l38 92 98 18-74 66 16 100-78-48-78 48 16-100-74-66 98-18 38-92z" fill="url(#mark)" filter="url(#shadow)"/>
+      <circle cx="256" cy="256" r="76" fill="#ffffff" opacity="0.94"/>
+      <text x="256" y="278" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="64" font-weight="900" fill="${escapeSvgText(primary)}">${escapeSvgText(initials)}</text>
+      <text x="256" y="430" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800" letter-spacing="3" fill="#ffffff" opacity="0.78">${escapeSvgText(label.toUpperCase())}</text>
+    </svg>
+  `;
+
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    alt: `${title} logo concept`,
+    query: title,
+    credit: "Generated logo concept"
+  };
 }
 
 async function downloadImage(image, filename) {
@@ -464,17 +519,19 @@ export default function SectionRenderer({ section, sections = [], theme }) {
 
           <div className="feature-card-grid mt-1 grid min-w-0 gap-4">
             {graphicItems.slice(0, 3).map((item, index) => {
-                const displayImage = isStockLogoImage(item.image) ? null : item.image;
-                const fallbackImage = index === 0 && image && !isStockLogoImage(image) ? image : null;
+                const displayImage = isStockLogoImage(item.image, item) ? null : item.image;
+                const fallbackImage = index === 0 && image && !isStockLogoImage(image, item) ? image : null;
+                const generatedLogoImage = isLogoGraphic(item) && !displayImage?.url && !fallbackImage?.url
+                  ? logoPlaceholderImage(item, theme, index)
+                  : null;
+                const logoImage = displayImage || fallbackImage || generatedLogoImage;
 
                 return (
               <article key={`${item.title}-${index}`} className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
                 <div className="graphic-logo-stage grid place-items-center bg-[linear-gradient(135deg,#f8fafc,#eef2ff)] p-4 sm:p-5">
                   <div className="aspect-square w-full max-w-[220px] overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)] sm:max-w-[260px]">
-                    {displayImage?.url ? (
-                      <SectionImage className="h-full w-full object-contain" image={{ ...displayImage, alt: displayImage.alt || item.title }} />
-                    ) : fallbackImage ? (
-                      <SectionImage className="h-full w-full object-contain" image={{ ...fallbackImage, alt: fallbackImage.alt || item.title }} />
+                    {logoImage?.url ? (
+                      <SectionImage className="h-full w-full object-contain" image={{ ...logoImage, alt: logoImage.alt || item.title }} />
                     ) : (
                       <div className="grid h-full place-items-center p-5 text-center text-white" style={{ background: theme.primary }}>
                         <div>
@@ -494,8 +551,8 @@ export default function SectionRenderer({ section, sections = [], theme }) {
                   <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
                   <button
                     type="button"
-                    onClick={() => downloadImage(displayImage || fallbackImage, item.title || `logo-${index + 1}`)}
-                    disabled={!displayImage?.url && !fallbackImage?.url}
+                    onClick={() => downloadImage(logoImage, item.title || `logo-${index + 1}`)}
+                    disabled={!logoImage?.url}
                     className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-black text-ink transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Download className="h-4 w-4" />

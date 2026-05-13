@@ -121,6 +121,47 @@ textarea {
   animation: authPanelRightIn 0.92s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
 }
 
+@media (min-width: 1024px) {
+  .auth-shell {
+    position: relative;
+    display: block;
+  }
+
+  .auth-panel-left {
+    min-height: 600px;
+    width: 50%;
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), border-radius 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+  }
+
+  .auth-panel-right {
+    position: absolute;
+    inset-block: 0;
+    right: 0;
+    width: 50%;
+    transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: transform;
+    z-index: 2;
+  }
+
+  .auth-mode-signin .auth-panel-left {
+    transform: translateX(0);
+  }
+
+  .auth-mode-signin .auth-panel-right {
+    transform: translateX(0);
+  }
+
+  .auth-mode-signup .auth-panel-left {
+    transform: translateX(100%);
+  }
+
+  .auth-mode-signup .auth-panel-right {
+    transform: translateX(-100%);
+    box-shadow: 24px 0 70px rgba(58, 48, 112, 0.16);
+  }
+}
+
 .auth-stagger {
   animation: authLiftIn 0.68s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
@@ -247,13 +288,13 @@ textarea {
 }
 
 @keyframes authPanelLeftIn {
-  from { opacity: 0; transform: translateX(-18px); }
-  to { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; filter: blur(4px); }
+  to { opacity: 1; filter: blur(0); }
 }
 
 @keyframes authPanelRightIn {
-  from { opacity: 0; transform: translateX(18px); }
-  to { opacity: 1; transform: translateX(0); }
+  from { opacity: 0; filter: blur(4px); }
+  to { opacity: 1; filter: blur(0); }
 }
 
 @keyframes authLiftIn {

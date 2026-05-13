@@ -62,7 +62,11 @@ export default function LoginPage() {
       <div className="auth-float-orb auth-float-orb-three absolute bottom-[9%] left-[8%] h-20 w-20 rounded-full bg-[#d9d3f2]/65" />
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-5 sm:px-6 sm:py-8">
-        <section className="auth-shell grid w-full max-w-6xl overflow-hidden rounded-[28px] bg-white shadow-[0_26px_76px_rgba(58,48,112,0.14)] lg:min-h-[600px] lg:grid-cols-2">
+        <section
+          className={`auth-shell ${
+            isSignin ? "auth-mode-signin" : "auth-mode-signup"
+          } grid w-full max-w-6xl overflow-hidden rounded-[28px] bg-white shadow-[0_26px_76px_rgba(58,48,112,0.14)] lg:min-h-[600px] lg:grid-cols-2`}
+        >
           <div className="auth-panel-left flex flex-col justify-center px-6 py-8 sm:px-10 lg:px-16">
             <div className="auth-stagger mb-6 flex items-center justify-center gap-3">
               <span className="auth-logo-badge flex h-11 w-11 items-center justify-center rounded-2xl bg-[#f3f1fb] text-[#5648c8] shadow-sm transition-transform duration-200 hover:-translate-y-0.5">

@@ -5,6 +5,7 @@ import AppShell from "../../components/ui/AppShell.jsx";
 import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import { api } from "../../services/api.js";
+import { fetchProjects, readCachedProjects, updateCachedProjects, writeCachedProjects } from "../../services/projectCache.js";
 import { supabase } from "../../services/supabaseClient.js";
 
 function formatTimeAgo(date) {
@@ -41,7 +42,7 @@ function ProjectCard({ project, onDelete, onRequestRename, deleting }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const updatedAt = new Date(project.updated_at || project.created_at);
   const previewImage = project.sections?.find((section) => section.image?.url)?.image?.url;
-  const sectionCount = project.sections?.length || 0;
+  const sectionCount = project.section_count ?? project.sections?.length ?? 0;
   const industryTag = inferIndustryTag(project);
   const theme = {
     primary: project.theme?.primary || "#2f6fed",
@@ -119,7 +120,7 @@ function ProjectCard({ project, onDelete, onRequestRename, deleting }) {
         <div className="absolute inset-0 bg-gradient-to-t from-ink/45 via-transparent to-transparent" />
         <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between gap-3">
           <span className="rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-ink shadow-sm">
-            {sectionCount || "New"} {sectionCount === 1 ? "section" : "sections"}
+            {sectionCount ? `${sectionCount} ${sectionCount === 1 ? "section" : "sections"}` : "Saved project"}
           </span>
         </div>
       </div>
@@ -185,11 +186,16 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const cachedProjects = readCachedProjects();
 
-    api
-      .listProjects()
+    if (cachedProjects.length) {
+      setProjects(cachedProjects);
+      setLoading(false);
+    }
+
+    fetchProjects({ force: true })
       .then((data) => {
-        if (!cancelled) setProjects(data.projects || []);
+        if (!cancelled) setProjects(data || []);
       })
       .catch(async (requestError) => {
         if (cancelled) return;
@@ -217,6 +223,7 @@ export default function DashboardPage() {
 
     try {
       await api.deleteProject(id);
+      updateCachedProjects((currentProjects) => currentProjects.filter((project) => project.id !== id));
     } catch (requestError) {
       setProjects(previousProjects);
       setError(requestError.message);
@@ -232,12 +239,10 @@ export default function DashboardPage() {
 
     try {
       const data = await api.updateProject(project.id, {
-        name,
-        prompt: project.prompt,
-        sections: project.sections,
-        theme: project.theme
+        name
       });
       setProjects((currentProjects) => currentProjects.map((item) => (item.id === project.id ? data.project : item)));
+      writeCachedProjects(projects.map((item) => (item.id === project.id ? data.project : item)));
     } catch (requestError) {
       setProjects(previousProjects);
       setError(requestError.message);

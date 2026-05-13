@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
-import { api } from "../../services/api.js";
+import { fetchProjects, readCachedProjects } from "../../services/projectCache.js";
 import { supabase } from "../../services/supabaseClient.js";
 
 const recentProjectStorageKey = "siteforge_recent_project_ids";
@@ -34,14 +34,32 @@ function writeRecentProjectId(projectId) {
 
 function readRecentProjectCache() {
   try {
-    return JSON.parse(localStorage.getItem(recentProjectCacheKey) || "[]").filter((project) => project?.id).slice(0, 3);
+    return JSON.parse(localStorage.getItem(recentProjectCacheKey) || "[]")
+      .filter((project) => project?.id)
+      .map((project) => ({
+        id: project.id,
+        name: project.name || "Untitled website",
+        created_at: project.created_at,
+        updated_at: project.updated_at
+      }))
+      .slice(0, 3);
   } catch {
     return [];
   }
 }
 
 function writeRecentProjectCache(projects) {
-  localStorage.setItem(recentProjectCacheKey, JSON.stringify(projects.slice(0, 3)));
+  localStorage.setItem(
+    recentProjectCacheKey,
+    JSON.stringify(
+      projects.slice(0, 3).map((project) => ({
+        id: project.id,
+        name: project.name || "Untitled website",
+        created_at: project.created_at,
+        updated_at: project.updated_at
+      }))
+    )
+  );
 }
 
 function sidebarItemClass({ active, sidebarOpen }) {
@@ -108,12 +126,23 @@ export default function AppShell({ children }) {
     let cancelled = false;
     const recentIds = activeProjectId ? writeRecentProjectId(activeProjectId) : readRecentProjectIds();
 
+    const cachedProjects = readCachedProjects();
+    if (cachedProjects.length) {
+      const projectsById = new Map(cachedProjects.map((project) => [project.id, project]));
+      const openedProjects = recentIds.map((id) => projectsById.get(id)).filter(Boolean);
+      const fallbackProjects = [...cachedProjects]
+        .sort((first, second) => new Date(second.updated_at || second.created_at) - new Date(first.updated_at || first.created_at))
+        .slice(0, 3);
+      const nextRecentProjects = (openedProjects.length ? openedProjects : fallbackProjects).slice(0, 3);
+      setRecentProjects(nextRecentProjects);
+      writeRecentProjectCache(nextRecentProjects);
+    }
+
     setRecentLoading(true);
-    api
-      .listProjects()
+    fetchProjects()
       .then((data) => {
         if (cancelled) return;
-        const projects = data.projects || [];
+        const projects = data || [];
         const projectsById = new Map(projects.map((project) => [project.id, project]));
         const openedProjects = recentIds.map((id) => projectsById.get(id)).filter(Boolean);
         const fallbackProjects = [...projects]
@@ -124,7 +153,7 @@ export default function AppShell({ children }) {
         writeRecentProjectCache(nextRecentProjects);
       })
       .catch(() => {
-        if (!cancelled) setRecentProjects([]);
+        if (!cancelled && !recentProjects.length) setRecentProjects(readRecentProjectCache());
       })
       .finally(() => {
         if (!cancelled) setRecentLoading(false);

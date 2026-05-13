@@ -10,10 +10,21 @@ function serializeProject(body, userId) {
   };
 }
 
+function serializeProjectUpdate(body) {
+  const project = {};
+
+  if (Object.prototype.hasOwnProperty.call(body, "name")) project.name = body.name || "Untitled website";
+  if (Object.prototype.hasOwnProperty.call(body, "prompt")) project.prompt = body.prompt || "";
+  if (Object.prototype.hasOwnProperty.call(body, "sections")) project.sections = Array.isArray(body.sections) ? body.sections : [];
+  if (Object.prototype.hasOwnProperty.call(body, "theme")) project.theme = body.theme && typeof body.theme === "object" ? body.theme : {};
+
+  return project;
+}
+
 export async function listProjects(req, res) {
   const { data, error } = await supabaseAdmin
     .from("projects")
-    .select("*")
+    .select("id,user_id,name,prompt,theme,created_at,updated_at")
     .eq("user_id", req.user.id)
     .order("updated_at", { ascending: false });
 
@@ -47,7 +58,7 @@ export async function createProject(req, res) {
 
 export async function updateProject(req, res) {
   const project = {
-    ...serializeProject(req.body, req.user.id),
+    ...serializeProjectUpdate(req.body),
     updated_at: new Date().toISOString()
   };
 

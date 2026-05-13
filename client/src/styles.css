@@ -315,11 +315,13 @@ textarea {
 
 .auth-preview-card {
   transform-style: preserve-3d;
-  animation: authCardDrift 7s ease-in-out infinite;
+  transform-origin: center;
+  animation: authCardTilt 8s cubic-bezier(0.45, 0, 0.2, 1) infinite;
 }
 
 .auth-preview-layer {
-  animation: authLayerIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: authLayerIn 0.7s cubic-bezier(0.16, 1, 0.3, 1) both, authLayerParallax 8s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  will-change: transform;
 }
 
 .auth-preview-layer-one {
@@ -327,7 +329,7 @@ textarea {
 }
 
 .auth-preview-layer-two {
-  animation-delay: 0.5s;
+  animation-delay: 0.5s, 0.25s;
 }
 
 .auth-live-pill {
@@ -454,14 +456,23 @@ textarea {
   52%, 100% { transform: translateX(520%) rotate(12deg); opacity: 0; }
 }
 
-@keyframes authCardDrift {
-  0%, 100% { transform: translateY(0) rotateX(0deg) rotateY(0deg); }
-  50% { transform: translateY(-10px) rotateX(2deg) rotateY(-3deg); }
+@keyframes authCardTilt {
+  0%, 100% { transform: perspective(900px) translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg); }
+  25% { transform: perspective(900px) translateY(-8px) rotateX(3deg) rotateY(-5deg) rotateZ(-0.6deg); }
+  50% { transform: perspective(900px) translateY(-12px) rotateX(-2deg) rotateY(4deg) rotateZ(0.5deg); }
+  75% { transform: perspective(900px) translateY(-6px) rotateX(2deg) rotateY(3deg) rotateZ(-0.3deg); }
 }
 
 @keyframes authLayerIn {
   from { opacity: 0; transform: translateY(18px) scale(0.96); }
   to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes authLayerParallax {
+  0%, 100% { translate: 0 0; }
+  25% { translate: 5px -4px; }
+  50% { translate: -4px 5px; }
+  75% { translate: 3px -2px; }
 }
 
 @keyframes authLivePulse {

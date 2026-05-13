@@ -17,12 +17,13 @@ That keeps backend API routes working while allowing React Router routes such as
 ```json
 {
   "version": 2,
-  "installCommand": "npm install && npm install --prefix client && npm install --prefix server",
+  "installCommand": "npm install",
   "buildCommand": "npm run build",
   "outputDirectory": "client/dist",
   "functions": {
     "api/index.js": {
-      "includeFiles": "server/src/**"
+      "includeFiles": "server/src/**",
+      "maxDuration": 300
     }
   },
   "rewrites": [

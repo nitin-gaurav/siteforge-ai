@@ -61,6 +61,8 @@ const imageLoadingSteps = [
   "Preparing your editable preview..."
 ];
 
+const homeDraftStorageKey = "siteforge_home_draft";
+
 function projectNameFromPrompt(prompt) {
   const cleaned = prompt.trim().replace(/\s+/g, " ");
   if (!cleaned) return "Untitled website";
@@ -137,13 +139,34 @@ function compileBusinessPrompt(brief, extraPrompt = "") {
   ].filter(Boolean).join("\n");
 }
 
+function readHomeDraft() {
+  try {
+    const draft = JSON.parse(localStorage.getItem(homeDraftStorageKey) || "{}");
+    return {
+      prompt: typeof draft.prompt === "string" ? draft.prompt : "",
+      mode: draft.mode === "images" ? "images" : "website",
+      businessBrief: {
+        ...initialBusinessBrief,
+        ...(draft.businessBrief && typeof draft.businessBrief === "object" ? draft.businessBrief : {})
+      }
+    };
+  } catch {
+    return {
+      prompt: "",
+      mode: "website",
+      businessBrief: initialBusinessBrief
+    };
+  }
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
-  const [prompt, setPrompt] = useState("");
-  const [businessBrief, setBusinessBrief] = useState(initialBusinessBrief);
+  const initialDraft = useMemo(() => readHomeDraft(), []);
+  const [prompt, setPrompt] = useState(initialDraft.prompt);
+  const [businessBrief, setBusinessBrief] = useState(initialDraft.businessBrief);
   const [error, setError] = useState("");
   const [generating, setGenerating] = useState(false);
-  const [mode, setMode] = useState("website");
+  const [mode, setMode] = useState(initialDraft.mode);
   const [headlineIndex, setHeadlineIndex] = useState(0);
   const [typedHeadlineSuffix, setTypedHeadlineSuffix] = useState("");
   const [isDeletingHeadline, setIsDeletingHeadline] = useState(false);
@@ -164,6 +187,11 @@ export default function HomePage() {
   const displayHeadline = `${headlinePrefix} - ${headlineSuffix}`;
   const loadingSteps = isImageMode ? imageLoadingSteps : websiteLoadingSteps;
   const loadingStepIndex = Math.min(Math.floor(elapsedSeconds / 8), loadingSteps.length - 1);
+  const canGenerate = Boolean(effectivePrompt);
+
+  useEffect(() => {
+    localStorage.setItem(homeDraftStorageKey, JSON.stringify({ prompt, businessBrief, mode }));
+  }, [prompt, businessBrief, mode]);
 
   useEffect(() => {
     setHeadlineIndex(0);
@@ -244,6 +272,7 @@ export default function HomePage() {
         theme: generated?.theme || {}
       });
 
+      localStorage.removeItem(homeDraftStorageKey);
       navigate(`/editor/${data.project.id}`);
     } catch (requestError) {
       setError(requestError.message);
@@ -425,7 +454,7 @@ export default function HomePage() {
                   type="submit"
                   size="lg"
                   loading={generating}
-                  disabled={!effectivePrompt}
+                  disabled={!canGenerate}
                   className="min-w-52 rounded-2xl bg-[#5b4bd1] shadow-[0_14px_34px_rgba(91,75,209,0.24)] hover:bg-[#4f41bd]"
                 >
                   {isImageMode ? <ImagePlus className="h-4 w-4" /> : <Sparkles className="h-4 w-4" />}
@@ -444,7 +473,6 @@ export default function HomePage() {
                       setPrompt(example);
                     } else {
                       setBusinessBrief((current) => ({ ...current, businessName: example }));
-                      setPrompt("");
                     }
                   }}
                   className="rounded-full border border-[#d9d3f2] bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-[0_8px_20px_rgba(77,63,148,0.10)] transition hover:border-[#6657dc]/40 hover:bg-[#f3f1fb] hover:text-[#5b4bd1]"

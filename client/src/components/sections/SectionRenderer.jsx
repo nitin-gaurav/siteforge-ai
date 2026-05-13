@@ -163,13 +163,17 @@ function CtaButton({ children, section, sections = [], theme, variant = "primary
 
 function SectionImage({ className, image }) {
   const [failed, setFailed] = useState(false);
+  const isGeneratingPlaceholder = image?.credit?.startsWith("Local fallback");
 
-  if (!image?.url || failed) {
+  if (!image?.url || failed || isGeneratingPlaceholder) {
     return (
-      <div className={`${className} grid place-items-center bg-slate-900 p-6 text-center text-white`}>
-        <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-200">Image preview</p>
-          <p className="mt-2 text-sm font-bold">{image?.query || image?.alt || "Generated image"}</p>
+      <div className={`${className} grid place-items-center overflow-hidden bg-[linear-gradient(135deg,#0f172a,#312e81)] p-6 text-center text-white`}>
+        <div className="grid max-w-xs gap-3">
+          <div className="mx-auto h-12 w-12 rounded-full border-4 border-white/20 border-t-white/90 animate-spin" />
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-100">
+            {isGeneratingPlaceholder ? "Generating image" : "Image preview"}
+          </p>
+          <p className="text-sm font-bold leading-6 text-white/80">{image?.query || image?.alt || "Generated image"}</p>
         </div>
       </div>
     );
@@ -294,7 +298,7 @@ export default function SectionRenderer({ section, sections = [], theme }) {
   const heading = "text-3xl font-black leading-tight sm:text-4xl lg:text-5xl";
   const subheading = "text-2xl font-black leading-tight sm:text-3xl";
   const body = "text-base leading-7 text-slate-600 sm:text-lg sm:leading-8";
-  const image = section.image?.url ? section.image : null;
+  const image = section.image?.url || section.image?.query ? section.image : null;
   const cards = section.items?.length ? section.items : [];
 
   if (section.type === "hero") {

@@ -194,6 +194,17 @@ function safeFilename(value = "logo") {
     .slice(0, 48) || "logo";
 }
 
+function isLogoGraphic(item = {}) {
+  const text = `${item.title || ""} ${item.meta || ""} ${item.image?.query || ""}`.toLowerCase();
+  return text.includes("logo") || text.includes("app icon") || text.includes("brand mark");
+}
+
+function isStockLogoImage(image = {}) {
+  const url = image.url || "";
+  const credit = image.credit || "";
+  return isLogoGraphic({ image }) && (url.includes("images.unsplash.com") || /unsplash/i.test(credit));
+}
+
 async function downloadImage(image, filename) {
   if (!image?.url) return;
 
@@ -451,15 +462,19 @@ export default function SectionRenderer({ section, sections = [], theme }) {
             <p className="mt-3 text-slate-600">{section.body}</p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            {graphicItems.slice(0, 3).map((item, index) => (
+          <div className="feature-card-grid mt-1 grid min-w-0 gap-4">
+            {graphicItems.slice(0, 3).map((item, index) => {
+                const displayImage = isStockLogoImage(item.image) ? null : item.image;
+                const fallbackImage = index === 0 && image && !isStockLogoImage(image) ? image : null;
+
+                return (
               <article key={`${item.title}-${index}`} className="overflow-hidden rounded-md border border-slate-200 bg-white shadow-sm">
-                <div className="grid aspect-square place-items-center bg-[linear-gradient(135deg,#f8fafc,#eef2ff)] p-5">
-                  <div className="aspect-square w-full max-w-[260px] overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)]">
-                    {item.image?.url ? (
-                      <SectionImage className="h-full w-full object-contain" image={{ ...item.image, alt: item.image.alt || item.title }} />
-                    ) : index === 0 && image ? (
-                      <SectionImage className="h-full w-full object-contain" image={{ ...image, alt: image.alt || item.title }} />
+                <div className="graphic-logo-stage grid place-items-center bg-[linear-gradient(135deg,#f8fafc,#eef2ff)] p-4 sm:p-5">
+                  <div className="aspect-square w-full max-w-[220px] overflow-hidden rounded-md border border-slate-200 bg-white shadow-[0_18px_45px_rgba(15,23,42,0.12)] sm:max-w-[260px]">
+                    {displayImage?.url ? (
+                      <SectionImage className="h-full w-full object-contain" image={{ ...displayImage, alt: displayImage.alt || item.title }} />
+                    ) : fallbackImage ? (
+                      <SectionImage className="h-full w-full object-contain" image={{ ...fallbackImage, alt: fallbackImage.alt || item.title }} />
                     ) : (
                       <div className="grid h-full place-items-center p-5 text-center text-white" style={{ background: theme.primary }}>
                         <div>
@@ -479,8 +494,8 @@ export default function SectionRenderer({ section, sections = [], theme }) {
                   <p className="mt-2 text-sm leading-6 text-slate-600">{item.body}</p>
                   <button
                     type="button"
-                    onClick={() => downloadImage(item.image || image, item.title || `logo-${index + 1}`)}
-                    disabled={!item.image?.url && !image?.url}
+                    onClick={() => downloadImage(displayImage || fallbackImage, item.title || `logo-${index + 1}`)}
+                    disabled={!displayImage?.url && !fallbackImage?.url}
                     className="mt-4 inline-flex min-h-10 w-full items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-black text-ink transition hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <Download className="h-4 w-4" />
@@ -488,7 +503,8 @@ export default function SectionRenderer({ section, sections = [], theme }) {
                   </button>
                 </div>
               </article>
-            ))}
+                );
+              })}
           </div>
         </div>
       </section>

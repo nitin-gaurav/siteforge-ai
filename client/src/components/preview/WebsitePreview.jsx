@@ -47,6 +47,7 @@ export default function WebsitePreview({ sections, theme, loading = false }) {
   const [viewport, setViewport] = useState("desktop");
   const [canvasSize, setCanvasSize] = useState({ width: 0, height: 0 });
   const canvasRef = useRef(null);
+  const userSelectedViewportRef = useRef(false);
   const activeViewport = viewports[viewport];
   const availableWidth = Math.max(canvasSize.width - 16, 320);
   const availableHeight = Math.max(canvasSize.height - 16, 420);
@@ -60,6 +61,9 @@ export default function WebsitePreview({ sections, theme, loading = false }) {
     const observer = new ResizeObserver(([entry]) => {
       const { width, height } = entry.contentRect;
       setCanvasSize({ width, height });
+      if (!userSelectedViewportRef.current && width > 0 && width < 640) {
+        setViewport("mobile");
+      }
     });
 
     observer.observe(canvasRef.current);
@@ -82,7 +86,10 @@ export default function WebsitePreview({ sections, theme, loading = false }) {
                 className={`flex h-9 items-center justify-center gap-1.5 rounded-xl px-2 text-xs font-bold transition sm:gap-2 sm:px-3 sm:text-sm ${
                   viewport === key ? "bg-white text-accent shadow-[0_8px_20px_rgba(77,63,148,0.12)]" : "text-slate-600 hover:bg-white/70"
                 }`}
-                onClick={() => setViewport(key)}
+                onClick={() => {
+                  userSelectedViewportRef.current = true;
+                  setViewport(key);
+                }}
                 title={item.label}
               >
                 <Icon className="h-4 w-4" />

@@ -122,6 +122,63 @@ function fallbackImage(query, index) {
   };
 }
 
+function isLogoQuery(query = "") {
+  const normalized = query.toLowerCase();
+  return normalized.includes("logo") || normalized.includes("app icon") || normalized.includes("brand mark");
+}
+
+function logoPlaceholderImage(query = "", index = 0) {
+  const label = normalizeSearchQuery(query)
+    .replace(/\b(square|clean|brand|identity|mark|icon|logo|symbol|simple|centered|text|vector|style|minimal|mockup|banner)\b/gi, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 28) || "Brand";
+  const initials = label
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join("") || "AI";
+  const palettes = [
+    ["#0f172a", "#38bdf8", "#ffffff"],
+    ["#14532d", "#84cc16", "#f7fee7"],
+    ["#312e81", "#a78bfa", "#ffffff"],
+    ["#7f1d1d", "#fb7185", "#fff1f2"]
+  ];
+  const [background, accent, foreground] = palettes[index % palettes.length];
+  const safeLabel = label.replace(/[<>&"]/g, "");
+  const safeInitials = initials.replace(/[<>&"]/g, "");
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="${background}"/>
+      <stop offset="1" stop-color="${accent}"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="22" stdDeviation="28" flood-color="#000000" flood-opacity=".24"/>
+    </filter>
+  </defs>
+  <rect width="1024" height="1024" rx="220" fill="url(#bg)"/>
+  <circle cx="760" cy="210" r="155" fill="${foreground}" opacity=".13"/>
+  <circle cx="238" cy="790" r="190" fill="${foreground}" opacity=".10"/>
+  <g filter="url(#shadow)">
+    <rect x="284" y="238" width="456" height="456" rx="128" fill="${foreground}" opacity=".96"/>
+    <path d="M512 332l45 120 128 10-98 82 30 126-105-68-105 68 30-126-98-82 128-10 45-120z" fill="${accent}"/>
+  </g>
+  <text x="512" y="807" text-anchor="middle" fill="${foreground}" font-family="Arial, sans-serif" font-size="96" font-weight="900" letter-spacing="8">${safeInitials}</text>
+  <text x="512" y="878" text-anchor="middle" fill="${foreground}" opacity=".72" font-family="Arial, sans-serif" font-size="38" font-weight="800">${safeLabel}</text>
+</svg>`.trim();
+
+  return {
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    alt: query || "Generated logo placeholder",
+    query,
+    credit: "Generated logo placeholder",
+    creditUrl: ""
+  };
+}
+
 export async function searchUnsplashImage(query, index = 0) {
   const accessKey = process.env.UNSPLASH_ACCESS_KEY;
 
@@ -188,7 +245,10 @@ export async function searchUnsplashImage(query, index = 0) {
 }
 
 async function resolveGraphicImage(query, index) {
-  return (await generateGeminiImage(query, index)) || searchUnsplashImage(query, index);
+  const generatedImage = await generateGeminiImage(query, index);
+  if (generatedImage) return generatedImage;
+  if (isLogoQuery(query)) return logoPlaceholderImage(query, index);
+  return searchUnsplashImage(query, index);
 }
 
 export async function resolveSectionImages(sections, prompt) {

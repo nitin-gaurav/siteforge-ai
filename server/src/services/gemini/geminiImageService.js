@@ -8,7 +8,7 @@ config();
 config({ path: resolve(__dirname, "../../../.env"), override: false });
 
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
-const GEMINI_IMAGE_TIMEOUT_MS = Number(process.env.GEMINI_IMAGE_TIMEOUT_MS || 12000);
+const GEMINI_IMAGE_TIMEOUT_MS = Number(process.env.GEMINI_IMAGE_TIMEOUT_MS || 30000);
 const imageCache = new Map();
 
 let cachedFetch;

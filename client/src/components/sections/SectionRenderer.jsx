@@ -165,7 +165,7 @@ function SectionImage({ className, image }) {
   const [failed, setFailed] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(false);
   const containerRef = React.useRef(null);
-  const isGeneratingPlaceholder = image?.credit?.startsWith("Local fallback");
+  const isFallbackPlaceholder = image?.credit?.startsWith("Local fallback");
   const isInlineImage = image?.url?.startsWith("data:image/");
 
   useEffect(() => {
@@ -174,7 +174,7 @@ function SectionImage({ className, image }) {
   }, [image?.url]);
 
   useEffect(() => {
-    if (!image?.url || failed || isGeneratingPlaceholder) return undefined;
+    if (!image?.url || failed || isFallbackPlaceholder) return undefined;
 
     if (!isInlineImage) {
       setShouldLoad(true);
@@ -206,15 +206,14 @@ function SectionImage({ className, image }) {
       observer._cancelScheduledLoad?.();
       observer.disconnect();
     };
-  }, [failed, image?.url, isGeneratingPlaceholder, isInlineImage]);
+  }, [failed, image?.url, isFallbackPlaceholder, isInlineImage]);
 
-  if (!image?.url || failed || isGeneratingPlaceholder || !shouldLoad) {
+  if (!image?.url || failed || isFallbackPlaceholder || !shouldLoad) {
     return (
       <div ref={containerRef} className={`${className} grid place-items-center overflow-hidden bg-[linear-gradient(135deg,#0f172a,#312e81)] p-6 text-center text-white`}>
         <div className="grid max-w-xs gap-3">
-          {isGeneratingPlaceholder ? <div className="mx-auto h-12 w-12 rounded-full border-4 border-white/20 border-t-white/90 animate-spin" /> : null}
           <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-100">
-            {isGeneratingPlaceholder ? "Generating image" : shouldLoad ? "Image preview" : "Loading image"}
+            {isFallbackPlaceholder ? "AI image pending" : shouldLoad ? "Image preview" : "Loading image"}
           </p>
           <p className="text-sm font-bold leading-6 text-white/80">{image?.query || image?.alt || "Generated image"}</p>
         </div>

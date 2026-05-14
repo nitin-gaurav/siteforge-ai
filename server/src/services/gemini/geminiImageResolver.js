@@ -2,7 +2,7 @@ import { generateGeminiImage } from "./geminiImageService.js";
 
 const imageCache = new Map();
 const renderImageSectionTypes = new Set(["hero", "about", "features", "graphics", "testimonial", "sidebar", "cta"]);
-const defaultWebsiteImageBudget = Number(process.env.GEMINI_WEBSITE_IMAGE_BUDGET || 0);
+const defaultWebsiteImageBudget = Number(process.env.GEMINI_WEBSITE_IMAGE_BUDGET || 3);
 const defaultLogoImageBudget = Number(process.env.GEMINI_LOGO_IMAGE_BUDGET || 3);
 const sectionPriority = {
   hero: 0,

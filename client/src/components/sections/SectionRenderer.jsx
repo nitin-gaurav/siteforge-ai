@@ -419,12 +419,15 @@ export default function SectionRenderer({ section, sections = [], theme }) {
 
     return (
       <section className={common}>
-        <div className="max-w-2xl">
-          <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
-            Services
-          </p>
-          <h2 className={`${subheading} mt-2`}>{section.title}</h2>
-          <p className="mt-3 text-slate-600">{section.body}</p>
+        <div className="feature-section-layout grid min-w-0 items-center gap-6">
+          <div className="max-w-2xl">
+            <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
+              Services
+            </p>
+            <h2 className={`${subheading} mt-2`}>{section.title}</h2>
+            <p className="mt-3 text-slate-600">{section.body}</p>
+          </div>
+          {image ? <SectionImage className="aspect-[16/10] w-full max-w-full min-w-0 rounded-md object-cover shadow-sm" image={{ ...image, alt: image.alt || section.title }} /> : null}
         </div>
         <div className="feature-card-grid mt-8 grid min-w-0 gap-4">
           {serviceItems.map((item, index) => (
@@ -459,6 +462,7 @@ export default function SectionRenderer({ section, sections = [], theme }) {
           <h2 className={`${subheading} mt-2`}>{section.title}</h2>
           <p className="mt-3 text-slate-600">{section.body}</p>
         </div>
+        {image ? <SectionImage className="mt-7 aspect-[16/7] w-full max-w-full min-w-0 rounded-md object-cover shadow-sm" image={{ ...image, alt: image.alt || section.title }} /> : null}
         <div className="mt-8 grid gap-3">
           {faqItems.map((item, index) => (
             <article key={`${item.title}-${index}`} className="rounded-md border border-slate-200 bg-white p-5">
@@ -483,12 +487,15 @@ export default function SectionRenderer({ section, sections = [], theme }) {
     return (
       <section className={common}>
         <div className="grid gap-6 rounded-md border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-          <div className="max-w-2xl">
-            <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
-              Contact
-            </p>
-            <h2 className={`${subheading} mt-2`}>{section.title}</h2>
-            <p className="mt-3 text-slate-600">{section.body}</p>
+          <div className="feature-section-layout grid min-w-0 items-center gap-6">
+            <div className="max-w-2xl">
+              <p className="text-xs font-black uppercase tracking-[0.16em]" style={{ color: theme.primary }}>
+                Contact
+              </p>
+              <h2 className={`${subheading} mt-2`}>{section.title}</h2>
+              <p className="mt-3 text-slate-600">{section.body}</p>
+            </div>
+            {image ? <SectionImage className="aspect-[16/10] w-full max-w-full min-w-0 rounded-md object-cover" image={{ ...image, alt: image.alt || section.title }} /> : null}
           </div>
           <div className="feature-card-grid grid min-w-0 gap-4">
             {contactItems.map((item, index) => (
@@ -529,6 +536,7 @@ export default function SectionRenderer({ section, sections = [], theme }) {
           <h2 className={`${subheading} mt-2`}>{section.title}</h2>
           <p className="mt-3 text-slate-600">{section.body}</p>
         </div>
+        {image ? <SectionImage className="mt-7 aspect-[16/7] w-full max-w-full min-w-0 rounded-md object-cover shadow-sm" image={{ ...image, alt: image.alt || section.title }} /> : null}
         <div className="mt-8 grid gap-3">
           {seoItems.map((item, index) => (
             <article key={`${item.title}-${index}`} className="rounded-md border border-slate-200 bg-white p-5">

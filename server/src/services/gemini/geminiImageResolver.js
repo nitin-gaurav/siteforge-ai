@@ -3,7 +3,7 @@ import { searchUnsplashImage } from "../unsplash/unsplashService.js";
 
 const imageCache = new Map();
 const unsplashImageCache = new Map();
-const renderImageSectionTypes = new Set(["hero", "about", "features", "graphics", "testimonial", "sidebar", "cta"]);
+const renderImageSectionTypes = new Set(["hero", "about", "features", "services", "faq", "contact", "seo", "graphics", "testimonial", "sidebar", "cta"]);
 const defaultLogoImageBudget = Number(process.env.GEMINI_LOGO_IMAGE_BUDGET || 3);
 const sectionPriority = {
   hero: 0,

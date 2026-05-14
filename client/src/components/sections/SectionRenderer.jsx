@@ -174,9 +174,9 @@ function SectionImage({ className, image }) {
   }, [image?.url]);
 
   useEffect(() => {
-    if (!image?.url || failed || isFallbackPlaceholder) return undefined;
+    if (!image?.url || failed) return undefined;
 
-    if (!isInlineImage) {
+    if (!isInlineImage || isFallbackPlaceholder) {
       setShouldLoad(true);
       return undefined;
     }
@@ -208,7 +208,7 @@ function SectionImage({ className, image }) {
     };
   }, [failed, image?.url, isFallbackPlaceholder, isInlineImage]);
 
-  if (!image?.url || failed || isFallbackPlaceholder || !shouldLoad) {
+  if (!image?.url || failed || !shouldLoad) {
     return (
       <div ref={containerRef} className={`${className} grid place-items-center overflow-hidden bg-[linear-gradient(135deg,#0f172a,#312e81)] p-6 text-center text-white`}>
         <div className="grid max-w-xs gap-3">

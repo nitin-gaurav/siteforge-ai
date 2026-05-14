@@ -10,7 +10,9 @@ export async function generateSite(req, res) {
     throw error;
   }
 
-  const website = await generateWebsite(prompt);
+  const website = await generateWebsite(prompt, {
+    includeImages: req.body.includeImages === true
+  });
   res.json(website);
 }
 

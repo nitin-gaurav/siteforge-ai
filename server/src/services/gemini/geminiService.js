@@ -54,10 +54,10 @@ function normalizeImage(section, prompt) {
   };
 }
 
-async function withImages(website, prompt) {
+async function withImages(website, prompt, options = {}) {
   return {
     ...website,
-    sections: await resolveSectionImages(website.sections, prompt)
+    sections: await resolveSectionImages(website.sections, prompt, options)
   };
 }
 
@@ -847,9 +847,13 @@ function modelCandidates() {
   ].filter(Boolean))];
 }
 
-export async function generateWebsite(prompt) {
+export async function generateWebsite(prompt, options = {}) {
+  const imageOptions = options.includeImages === false
+    ? { websiteImageBudget: 0, logoImageBudget: 0 }
+    : undefined;
+
   if (!process.env.GEMINI_API_KEY) {
-    return withImages(fallbackWebsiteDraft(prompt), prompt);
+    return withImages(fallbackWebsiteDraft(prompt), prompt, imageOptions);
   }
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -860,14 +864,14 @@ export async function generateWebsite(prompt) {
       const model = genAI.getGenerativeModel({ model: modelName });
       const result = await model.generateContent(buildPrompt(prompt));
       const text = result.response.text();
-      return withImages(normalizeWebsite(parseJson(text), prompt), prompt);
+      return withImages(normalizeWebsite(parseJson(text), prompt), imageOptions);
     } catch (error) {
       errors.push(`${modelName}: ${error.message}`);
     }
   }
 
   console.warn("Gemini generation failed. Falling back to local generator.", errors);
-  return withImages(fallbackWebsiteDraft(prompt), prompt);
+  return withImages(fallbackWebsiteDraft(prompt), prompt, imageOptions);
 }
 
 export async function assistWebsiteEdit(project, instruction) {

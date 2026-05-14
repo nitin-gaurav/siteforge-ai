@@ -69,8 +69,12 @@ function pickReplacementSection(targetSection, generatedSections) {
 
 function hasLocalFallbackImages(sections = []) {
   return sections.some((section) => {
+    if (section.image?.query && !section.image?.url) return true;
     if (section.image?.credit?.startsWith("Local fallback")) return true;
-    return section.items?.some((item) => item.image?.credit?.startsWith("Local fallback"));
+    return section.items?.some((item) => {
+      if (item.image?.query && !item.image?.url) return true;
+      return item.image?.credit?.startsWith("Local fallback");
+    });
   });
 }
 

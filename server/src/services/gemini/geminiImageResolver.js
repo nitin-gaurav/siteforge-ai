@@ -1,8 +1,9 @@
 import { generateGeminiImage } from "./geminiImageService.js";
+import { searchUnsplashImage } from "../unsplash/unsplashService.js";
 
 const imageCache = new Map();
+const unsplashImageCache = new Map();
 const renderImageSectionTypes = new Set(["hero", "about", "features", "graphics", "testimonial", "sidebar", "cta"]);
-const defaultWebsiteImageBudget = Number(process.env.GEMINI_WEBSITE_IMAGE_BUDGET || 3);
 const defaultLogoImageBudget = Number(process.env.GEMINI_LOGO_IMAGE_BUDGET || 3);
 const sectionPriority = {
   hero: 0,
@@ -139,8 +140,20 @@ async function resolveGeminiImage(query, index) {
   return image;
 }
 
+async function resolveUnsplashImage(query, index) {
+  const cacheKey = `${query}:${index}`;
+  if (unsplashImageCache.has(cacheKey)) {
+    return unsplashImageCache.get(cacheKey);
+  }
+
+  const image = await searchUnsplashImage(query, index);
+  const resolvedImage = image?.url ? image : fallbackWebsiteImage(query, index);
+  unsplashImageCache.set(cacheKey, resolvedImage);
+  return resolvedImage;
+}
+
 function shouldUseGeminiImage(query, generatedCount, budgets) {
-  const budget = isLogoQuery(query) ? budgets.logoImageBudget : budgets.websiteImageBudget;
+  const budget = isLogoQuery(query) ? budgets.logoImageBudget : budgets.graphicsImageBudget;
   return generatedCount.count < budget;
 }
 
@@ -156,16 +169,26 @@ async function resolveBudgetedImage(query, index, generatedCount, budgets) {
 function shouldRegenerateImage(image) {
   if (!image?.url) return true;
   const credit = image.credit?.toLowerCase() || "";
-  return !image.url.startsWith("data:image/") || credit.includes("unsplash") || credit.startsWith("local fallback");
+  return credit.includes("unsplash") || credit.startsWith("local fallback");
 }
 
 function keepExistingImage(image, query) {
   return image && !shouldRegenerateImage(image) ? { ...image, query } : undefined;
 }
 
+function shouldRegenerateWebsiteImage(image) {
+  if (!image?.url) return true;
+  const credit = image.credit?.toLowerCase() || "";
+  return image.url.startsWith("data:image/") || credit.startsWith("local fallback") || credit.includes("gemini");
+}
+
+function keepExistingWebsiteImage(image, query) {
+  return image && !shouldRegenerateWebsiteImage(image) ? { ...image, query } : undefined;
+}
+
 export async function resolveSectionImages(sections, prompt, options = {}) {
   const budgets = {
-    websiteImageBudget: options.websiteImageBudget ?? defaultWebsiteImageBudget,
+    graphicsImageBudget: options.graphicsImageBudget ?? options.websiteImageBudget ?? defaultLogoImageBudget,
     logoImageBudget: options.logoImageBudget ?? defaultLogoImageBudget
   };
   const graphicsOnly = options.graphicsOnly ?? false;
@@ -215,10 +238,12 @@ export async function resolveSectionImages(sections, prompt, options = {}) {
         continue;
       }
 
-      const existingImage = keepExistingImage(section.image, query);
+      const existingImage = isGraphicsSection ? keepExistingImage(section.image, query) : keepExistingWebsiteImage(section.image, query);
       const image = existingImage || (isGraphicsSection && Array.isArray(items)
         ? items.find((item) => item?.image?.url)?.image
-        : null) || await resolveBudgetedImage(query, index, generatedCount, budgets);
+        : null) || (isGraphicsSection
+          ? await resolveBudgetedImage(query, index, generatedCount, budgets)
+          : await resolveUnsplashImage(query, index));
 
       resolvedSections[index] = {
         ...section,

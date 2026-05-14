@@ -67,6 +67,10 @@ function normalizeImage(section, prompt) {
 }
 
 async function withImages(website, prompt, options = {}) {
+  if (options.skipImageResolution) {
+    return website;
+  }
+
   return {
     ...website,
     sections: await resolveSectionImages(website.sections, prompt, options)
@@ -865,7 +869,7 @@ function geminiUnavailableError(message, details = []) {
 
 export async function generateWebsite(prompt, options = {}) {
   const imageOptions = options.includeImages === false
-    ? { websiteImageBudget: 0, logoImageBudget: 0 }
+    ? { skipImageResolution: true }
     : undefined;
 
   if (!process.env.GEMINI_API_KEY) {

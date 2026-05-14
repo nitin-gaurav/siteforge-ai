@@ -5,6 +5,8 @@ const projectDetailCachePrefix = "siteforge_project_detail:";
 let pendingProjectsRequest = null;
 const pendingProjectDetailRequests = new Map();
 const projectDetailMemoryCache = new Map();
+let projectListMemoryCache = null;
+const projectListListeners = new Set();
 const maxPersistentProjectDetailChars = 900000;
 
 function projectTimestamp(project) {
@@ -38,6 +40,22 @@ function summarizeProject(project) {
   };
 }
 
+function setProjectListSnapshot(projects) {
+  projectListMemoryCache = sortProjectsByRecent(projects || []);
+  projectListListeners.forEach((listener) => listener(projectListMemoryCache));
+}
+
+export function getProjectListSnapshot() {
+  if (projectListMemoryCache) return projectListMemoryCache;
+  projectListMemoryCache = readCachedProjects();
+  return projectListMemoryCache;
+}
+
+export function subscribeProjectList(listener) {
+  projectListListeners.add(listener);
+  return () => projectListListeners.delete(listener);
+}
+
 export function readCachedProjects() {
   try {
     const cached = JSON.parse(localStorage.getItem(projectCacheKey) || "[]");
@@ -49,7 +67,9 @@ export function readCachedProjects() {
 
 export function writeCachedProjects(projects) {
   try {
-    localStorage.setItem(projectCacheKey, JSON.stringify(sortProjectsByRecent((projects || []).map(summarizeProject))));
+    const nextProjects = sortProjectsByRecent((projects || []).map(summarizeProject));
+    setProjectListSnapshot(nextProjects);
+    localStorage.setItem(projectCacheKey, JSON.stringify(nextProjects));
   } catch {
     // Ignore storage quota errors. The network result is still returned.
   }

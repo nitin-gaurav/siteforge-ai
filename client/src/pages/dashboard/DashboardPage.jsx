@@ -191,32 +191,6 @@ function sortProjectsByRecent(projects = []) {
   return [...projects].sort((first, second) => projectTimestamp(second) - projectTimestamp(first));
 }
 
-function mergeProjects(primaryProjects = [], secondaryProjects = []) {
-  const projectsById = new Map();
-
-  [...secondaryProjects, ...primaryProjects].forEach((project) => {
-    if (!project?.id) return;
-    projectsById.set(project.id, {
-      ...(projectsById.get(project.id) || {}),
-      ...project
-    });
-  });
-
-  return sortProjectsByRecent([...projectsById.values()]);
-}
-
-function mergeProjectsPreservingVisibleOrder(incomingProjects = [], visibleProjects = []) {
-  const incomingById = new Map((incomingProjects || []).filter((project) => project?.id).map((project) => [project.id, project]));
-  const visibleIds = new Set(visibleProjects.map((project) => project.id));
-  const updatedVisibleProjects = visibleProjects.map((project) => ({
-    ...project,
-    ...(incomingById.get(project.id) || {})
-  }));
-  const newProjects = sortProjectsByRecent((incomingProjects || []).filter((project) => project?.id && !visibleIds.has(project.id)));
-
-  return [...newProjects, ...updatedVisibleProjects];
-}
-
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
@@ -240,7 +214,7 @@ export default function DashboardPage() {
 
     fetchProjects({ force: true })
       .then((data) => {
-        if (!cancelled) setProjects((currentProjects) => mergeProjectsPreservingVisibleOrder(data || [], currentProjects));
+        if (!cancelled) setProjects(sortProjectsByRecent(data || []));
       })
       .catch(async (requestError) => {
         if (cancelled) return;

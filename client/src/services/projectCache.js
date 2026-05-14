@@ -17,20 +17,6 @@ function sortProjectsByRecent(projects = []) {
   return [...projects].sort((first, second) => projectTimestamp(second) - projectTimestamp(first));
 }
 
-function mergeProjects(primaryProjects = [], secondaryProjects = []) {
-  const projectsById = new Map();
-
-  [...secondaryProjects, ...primaryProjects].forEach((project) => {
-    if (!project?.id) return;
-    projectsById.set(project.id, {
-      ...(projectsById.get(project.id) || {}),
-      ...project
-    });
-  });
-
-  return sortProjectsByRecent([...projectsById.values()]);
-}
-
 function summarizeProject(project) {
   const sections = Array.isArray(project.sections) ? project.sections : [];
 
@@ -63,9 +49,7 @@ export function readCachedProjects() {
 
 export function writeCachedProjects(projects) {
   try {
-    const existingProjects = readCachedProjects();
-    const nextProjects = mergeProjects((projects || []).map(summarizeProject), existingProjects);
-    localStorage.setItem(projectCacheKey, JSON.stringify(nextProjects));
+    localStorage.setItem(projectCacheKey, JSON.stringify(sortProjectsByRecent((projects || []).map(summarizeProject))));
   } catch {
     // Ignore storage quota errors. The network result is still returned.
   }
@@ -176,6 +160,12 @@ export async function fetchProjectDetail(id, { force = false } = {}) {
       writeCachedProject(project);
       return project;
     })
+    .catch((error) => {
+      if (error.status === 404) {
+        removeCachedProject(id);
+      }
+      throw error;
+    })
     .finally(() => {
       pendingProjectDetailRequests.delete(id);
     });
@@ -190,7 +180,7 @@ export async function fetchProjects({ force = false } = {}) {
   pendingProjectsRequest = api
     .listProjects()
     .then((data) => {
-      const projects = mergeProjects(data.projects || [], readCachedProjects());
+      const projects = sortProjectsByRecent(data.projects || []);
       writeCachedProjects(projects);
       return projects;
     })

@@ -62,6 +62,16 @@ function writeRecentProjectCache(projects) {
   );
 }
 
+function removeRecentProject(projectId) {
+  try {
+    const nextIds = readRecentProjectIds().filter((id) => id !== projectId);
+    localStorage.setItem(recentProjectStorageKey, JSON.stringify(nextIds));
+    writeRecentProjectCache(readRecentProjectCache().filter((project) => project.id !== projectId));
+  } catch {
+    // Ignore storage errors. The project list refresh will repair this state.
+  }
+}
+
 function sidebarItemClass({ active, sidebarOpen }) {
   return `group flex h-11 w-full items-center gap-3 rounded-xl border px-3 text-sm font-black transition-all duration-200 ${
     active
@@ -88,10 +98,10 @@ function SidebarNavButton({ icon: Icon, label, active = false, sidebarOpen, onCl
   );
 }
 
-function RecentProjectLink({ project, active }) {
+function RecentProjectLink({ project, active, onMissing }) {
   function prefetchProject() {
-    fetchProjectDetail(project.id).catch(() => {
-      // The editor page will show any real loading error if the user opens it.
+    fetchProjectDetail(project.id).catch((error) => {
+      if (error.status === 404) onMissing(project.id);
     });
   }
 
@@ -178,14 +188,6 @@ export default function AppShell({ children }) {
   }, [location.pathname]);
 
   useEffect(() => {
-    recentProjects.forEach((project) => {
-      fetchProjectDetail(project.id).catch(() => {
-        // Recent links can still navigate; the editor owns any visible error.
-      });
-    });
-  }, [recentProjects]);
-
-  useEffect(() => {
     function closeProfileMenu(event) {
       if (!profileMenuRef.current?.contains(event.target) && !mobileProfileMenuRef.current?.contains(event.target)) {
         setProfileOpen(false);
@@ -258,7 +260,15 @@ export default function AppShell({ children }) {
                     <div className="mt-1 grid gap-0.5">
                       {recentProjects.length ? (
                         recentProjects.map((project) => (
-                          <RecentProjectLink key={project.id} project={project} active={project.id === activeProjectId} />
+                          <RecentProjectLink
+                            key={project.id}
+                            project={project}
+                            active={project.id === activeProjectId}
+                            onMissing={(projectId) => {
+                              removeRecentProject(projectId);
+                              setRecentProjects((projects) => projects.filter((item) => item.id !== projectId));
+                            }}
+                          />
                         ))
                       ) : recentLoading ? (
                         <div className="grid gap-1 px-2.5 py-1">

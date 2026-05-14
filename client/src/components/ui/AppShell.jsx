@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
-import { fetchProjects, readCachedProjects } from "../../services/projectCache.js";
+import { fetchProjectDetail, fetchProjects, readCachedProjects } from "../../services/projectCache.js";
 import { supabase } from "../../services/supabaseClient.js";
 
 const recentProjectStorageKey = "siteforge_recent_project_ids";
@@ -89,9 +89,18 @@ function SidebarNavButton({ icon: Icon, label, active = false, sidebarOpen, onCl
 }
 
 function RecentProjectLink({ project, active }) {
+  function prefetchProject() {
+    fetchProjectDetail(project.id).catch(() => {
+      // The editor page will show any real loading error if the user opens it.
+    });
+  }
+
   return (
     <Link
       to={`/editor/${project.id}`}
+      onFocus={prefetchProject}
+      onMouseEnter={prefetchProject}
+      onPointerDown={prefetchProject}
       className={`group flex h-9 items-center gap-2 rounded-lg px-2.5 text-xs font-bold transition-all duration-200 ${
         active
           ? "bg-[#f3f1fb] text-[#5b4bd1]"
@@ -167,6 +176,14 @@ export default function AppShell({ children }) {
   useEffect(() => {
     setProfileOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    recentProjects.forEach((project) => {
+      fetchProjectDetail(project.id).catch(() => {
+        // Recent links can still navigate; the editor owns any visible error.
+      });
+    });
+  }, [recentProjects]);
 
   useEffect(() => {
     function closeProfileMenu(event) {

@@ -5,7 +5,7 @@ import AppShell from "../../components/ui/AppShell.jsx";
 import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import { api } from "../../services/api.js";
-import { fetchProjects, readCachedProjects, updateCachedProjects, writeCachedProjects } from "../../services/projectCache.js";
+import { fetchProjectDetail, fetchProjects, readCachedProjects, removeCachedProject, writeCachedProject, writeCachedProjects } from "../../services/projectCache.js";
 import { supabase } from "../../services/supabaseClient.js";
 
 function formatTimeAgo(date) {
@@ -69,8 +69,18 @@ function ProjectCard({ project, onDelete, onRequestRename, deleting }) {
     onDelete(project.id);
   }
 
+  function prefetchProject() {
+    fetchProjectDetail(project.id).catch(() => {
+      // The editor route will surface any real loading error if the user opens it.
+    });
+  }
+
   return (
-    <div className="group relative overflow-hidden rounded-2xl border border-white bg-white shadow-[0_18px_46px_rgba(58,48,112,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+    <div
+      className="group relative overflow-hidden rounded-2xl border border-white bg-white shadow-[0_18px_46px_rgba(58,48,112,0.10)] transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
+      onMouseEnter={prefetchProject}
+      onFocus={prefetchProject}
+    >
       <div className="absolute right-4 top-4 z-20">
         <button
           type="button"
@@ -223,7 +233,7 @@ export default function DashboardPage() {
 
     try {
       await api.deleteProject(id);
-      updateCachedProjects((currentProjects) => currentProjects.filter((project) => project.id !== id));
+      removeCachedProject(id);
     } catch (requestError) {
       setProjects(previousProjects);
       setError(requestError.message);
@@ -243,6 +253,7 @@ export default function DashboardPage() {
       });
       setProjects((currentProjects) => currentProjects.map((item) => (item.id === project.id ? data.project : item)));
       writeCachedProjects(projects.map((item) => (item.id === project.id ? data.project : item)));
+      writeCachedProject(data.project);
     } catch (requestError) {
       setProjects(previousProjects);
       setError(requestError.message);

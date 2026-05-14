@@ -9,8 +9,10 @@ import WebsitePreview from "../../components/preview/WebsitePreview.jsx";
 import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import { api } from "../../services/api.js";
+import { fetchProjectDetail, readCachedProject, writeCachedProject } from "../../services/projectCache.js";
 import { useEditorStore } from "../../store/editorStore.js";
 import { downloadStaticSite } from "../../utils/exportStaticSite.js";
+import { optimizeProjectImages } from "../../utils/imageOptimizer.js";
 
 function mergeGeneratedSections(currentSections, generatedSections) {
   if (!Array.isArray(generatedSections) || generatedSections.length === 0) {
@@ -93,11 +95,18 @@ export default function EditorPage() {
       return;
     }
 
-    store.startProjectLoad(projectId);
+    const cachedProject = readCachedProject(projectId);
+    const currentProject = useEditorStore.getState();
+    const alreadyShowingProject = currentProject.projectId === projectId && currentProject.sections.length > 0;
 
-    api
-      .getProject(projectId)
-      .then(({ project }) => {
+    if (cachedProject) {
+      store.setProject(cachedProject);
+    } else if (!alreadyShowingProject) {
+      store.startProjectLoad(projectId);
+    }
+
+    fetchProjectDetail(projectId, { force: true })
+      .then((project) => {
         if (!cancelled) {
           store.setProject(project);
         }
@@ -134,13 +143,15 @@ export default function EditorPage() {
       .then(async ({ sections }) => {
         if (cancelled || !Array.isArray(sections) || !sections.length) return;
 
-        store.setSections(sections);
-        await api.updateProject(activeProjectId, {
+        const optimizedSections = await optimizeProjectImages(sections);
+        store.setSections(optimizedSections);
+        const data = await api.updateProject(activeProjectId, {
           name: store.name,
           prompt: store.prompt,
-          sections,
+          sections: optimizedSections,
           theme: store.theme
         });
+        writeCachedProject(data.project);
       })
       .catch((requestError) => {
         console.warn("Image hydration failed", requestError);
@@ -164,10 +175,11 @@ export default function EditorPage() {
     store.setStatus("generating");
     try {
       const data = await api.generateSite(store.prompt);
+      const generatedSections = await optimizeProjectImages(data.sections);
       if (isExistingProject) {
-        store.setSections(mergeGeneratedSections(store.sections, data.sections));
+        store.setSections(mergeGeneratedSections(store.sections, generatedSections));
       } else {
-        store.setSections(data.sections);
+        store.setSections(generatedSections);
         store.setTheme(data.theme);
         if (data.name) store.setName(data.name);
       }
@@ -189,7 +201,8 @@ export default function EditorPage() {
     setRegeneratingId(section.id);
     try {
       const data = await api.generateSite(prompt);
-      const replacement = pickReplacementSection(section, data.sections);
+      const generatedSections = await optimizeProjectImages(data.sections);
+      const replacement = pickReplacementSection(section, generatedSections);
       if (!replacement) return;
 
       store.setSections(
@@ -207,19 +220,26 @@ export default function EditorPage() {
   async function saveProject() {
     setError("");
     store.setStatus("saving");
+    const optimizedSections = await optimizeProjectImages(store.sections);
+    if (optimizedSections !== store.sections) {
+      store.setSections(optimizedSections);
+    }
+
     const payload = {
       name: store.name,
       prompt: store.prompt,
-      sections: store.sections,
+      sections: optimizedSections,
       theme: store.theme
     };
 
     try {
       if (store.projectId || projectId) {
-        await api.updateProject(store.projectId || projectId, payload);
+        const data = await api.updateProject(store.projectId || projectId, payload);
+        writeCachedProject(data.project);
       } else {
         const data = await api.createProject(payload);
         store.setProject(data.project);
+        writeCachedProject(data.project);
         window.history.replaceState(null, "", `/editor/${data.project.id}`);
       }
     } catch (requestError) {

@@ -1,7 +1,11 @@
 import { api } from "./api.js";
 
 const projectCacheKey = "siteforge_project_list_cache";
+const projectDetailCachePrefix = "siteforge_project_detail:";
 let pendingProjectsRequest = null;
+const pendingProjectDetailRequests = new Map();
+const projectDetailMemoryCache = new Map();
+const maxPersistentProjectDetailChars = 900000;
 
 function summarizeProject(project) {
   const sections = Array.isArray(project.sections) ? project.sections : [];
@@ -45,6 +49,113 @@ export function updateCachedProjects(updater) {
   const nextProjects = updater(readCachedProjects());
   writeCachedProjects(nextProjects);
   return nextProjects;
+}
+
+function projectDetailCacheKey(id) {
+  return `${projectDetailCachePrefix}${id}`;
+}
+
+function normalizeProjectDetail(project) {
+  if (!project?.id || !Array.isArray(project.sections)) return null;
+
+  return {
+    id: project.id,
+    user_id: project.user_id,
+    name: project.name || "Untitled website",
+    prompt: project.prompt || "",
+    sections: project.sections,
+    theme: project.theme || {},
+    created_at: project.created_at,
+    updated_at: project.updated_at
+  };
+}
+
+function hasInlineRasterImage(value) {
+  if (!value || typeof value !== "object") return false;
+  if (typeof value.url === "string" && /^data:image\/(png|jpe?g|webp|gif);base64,/i.test(value.url)) return true;
+  if (Array.isArray(value)) return value.some(hasInlineRasterImage);
+  return Object.values(value).some(hasInlineRasterImage);
+}
+
+export function readCachedProject(id) {
+  if (!id) return null;
+  if (projectDetailMemoryCache.has(id)) return projectDetailMemoryCache.get(id);
+
+  try {
+    const cached = JSON.parse(localStorage.getItem(projectDetailCacheKey(id)) || "null");
+    return normalizeProjectDetail(cached);
+  } catch {
+    return null;
+  }
+}
+
+export function writeCachedProject(project) {
+  const normalizedProject = normalizeProjectDetail(project);
+  if (!normalizedProject) return;
+
+  projectDetailMemoryCache.set(normalizedProject.id, normalizedProject);
+
+  try {
+    if (hasInlineRasterImage(normalizedProject)) {
+      updateCachedProjects((projects) => {
+        const existingIndex = projects.findIndex((item) => item.id === normalizedProject.id);
+        if (existingIndex < 0) return [normalizedProject, ...projects];
+
+        return projects.map((item) => (item.id === normalizedProject.id ? { ...item, ...normalizedProject } : item));
+      });
+      return;
+    }
+
+    const serializedProject = JSON.stringify(normalizedProject);
+    if (serializedProject.length > maxPersistentProjectDetailChars) return;
+
+    localStorage.setItem(projectDetailCacheKey(normalizedProject.id), serializedProject);
+    updateCachedProjects((projects) => {
+      const existingIndex = projects.findIndex((item) => item.id === normalizedProject.id);
+      if (existingIndex < 0) return [normalizedProject, ...projects];
+
+      return projects.map((item) => (item.id === normalizedProject.id ? { ...item, ...normalizedProject } : item));
+    });
+  } catch {
+    // Ignore storage quota errors. The network result is still returned.
+  }
+}
+
+export function removeCachedProject(id) {
+  if (!id) return;
+
+  try {
+    projectDetailMemoryCache.delete(id);
+    localStorage.removeItem(projectDetailCacheKey(id));
+    updateCachedProjects((projects) => projects.filter((project) => project.id !== id));
+  } catch {
+    // Ignore storage errors. The server remains the source of truth.
+  }
+}
+
+export async function fetchProjectDetail(id, { force = false } = {}) {
+  if (!id) return null;
+  if (!force) {
+    const cachedProject = readCachedProject(id);
+    if (cachedProject) return cachedProject;
+  }
+
+  if (pendingProjectDetailRequests.has(id)) {
+    return pendingProjectDetailRequests.get(id);
+  }
+
+  const request = api
+    .getProject(id)
+    .then(({ project }) => {
+      writeCachedProject(project);
+      return project;
+    })
+    .finally(() => {
+      pendingProjectDetailRequests.delete(id);
+    });
+
+  pendingProjectDetailRequests.set(id, request);
+  return request;
 }
 
 export async function fetchProjects({ force = false } = {}) {

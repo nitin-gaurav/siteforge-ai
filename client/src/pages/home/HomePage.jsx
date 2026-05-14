@@ -6,6 +6,8 @@ import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import Textarea from "../../components/ui/Textarea.jsx";
 import { api } from "../../services/api.js";
+import { writeCachedProject } from "../../services/projectCache.js";
+import { optimizeProjectImages } from "../../utils/imageOptimizer.js";
 
 const examples = [
   "A dental clinic in Mumbai",
@@ -263,16 +265,18 @@ export default function HomePage() {
       const projectSections = isImageMode
         ? (await api.generateImages(trimmedPrompt, buildImageModeSections(trimmedPrompt))).sections
         : generated.sections;
+      const optimizedSections = await optimizeProjectImages(Array.isArray(projectSections) ? projectSections : []);
       const data = await api.createProject({
         name: isImageMode
           ? `AI Graphics - ${projectNameFromPrompt(trimmedPrompt)}`
           : generated.name || projectNameFromPrompt(trimmedPrompt),
         prompt: trimmedPrompt,
-        sections: Array.isArray(projectSections) ? projectSections : [],
+        sections: optimizedSections,
         theme: generated?.theme || {}
       });
 
       localStorage.removeItem(homeDraftStorageKey);
+      writeCachedProject(data.project);
       navigate(`/editor/${data.project.id}`);
     } catch (requestError) {
       setError(requestError.message);

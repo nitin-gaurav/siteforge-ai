@@ -163,15 +163,58 @@ function CtaButton({ children, section, sections = [], theme, variant = "primary
 
 function SectionImage({ className, image }) {
   const [failed, setFailed] = useState(false);
+  const [shouldLoad, setShouldLoad] = useState(false);
+  const containerRef = React.useRef(null);
   const isGeneratingPlaceholder = image?.credit?.startsWith("Local fallback");
+  const isInlineImage = image?.url?.startsWith("data:image/");
 
-  if (!image?.url || failed || isGeneratingPlaceholder) {
+  useEffect(() => {
+    setFailed(false);
+    setShouldLoad(false);
+  }, [image?.url]);
+
+  useEffect(() => {
+    if (!image?.url || failed || isGeneratingPlaceholder) return undefined;
+
+    if (!isInlineImage) {
+      setShouldLoad(true);
+      return undefined;
+    }
+
+    const node = containerRef.current;
+    if (!node || typeof IntersectionObserver !== "function") {
+      const timeout = window.setTimeout(() => setShouldLoad(true), 0);
+      return () => window.clearTimeout(timeout);
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+
+        observer.disconnect();
+        const schedule = window.requestIdleCallback || ((callback) => window.setTimeout(callback, 1));
+        const cancel = window.cancelIdleCallback || window.clearTimeout;
+        const handle = schedule(() => setShouldLoad(true), { timeout: 600 });
+
+        observer._cancelScheduledLoad = () => cancel(handle);
+      },
+      { rootMargin: "900px 0px" }
+    );
+
+    observer.observe(node);
+    return () => {
+      observer._cancelScheduledLoad?.();
+      observer.disconnect();
+    };
+  }, [failed, image?.url, isGeneratingPlaceholder, isInlineImage]);
+
+  if (!image?.url || failed || isGeneratingPlaceholder || !shouldLoad) {
     return (
-      <div className={`${className} grid place-items-center overflow-hidden bg-[linear-gradient(135deg,#0f172a,#312e81)] p-6 text-center text-white`}>
+      <div ref={containerRef} className={`${className} grid place-items-center overflow-hidden bg-[linear-gradient(135deg,#0f172a,#312e81)] p-6 text-center text-white`}>
         <div className="grid max-w-xs gap-3">
-          <div className="mx-auto h-12 w-12 rounded-full border-4 border-white/20 border-t-white/90 animate-spin" />
+          {isGeneratingPlaceholder ? <div className="mx-auto h-12 w-12 rounded-full border-4 border-white/20 border-t-white/90 animate-spin" /> : null}
           <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-100">
-            {isGeneratingPlaceholder ? "Generating image" : "Image preview"}
+            {isGeneratingPlaceholder ? "Generating image" : shouldLoad ? "Image preview" : "Loading image"}
           </p>
           <p className="text-sm font-bold leading-6 text-white/80">{image?.query || image?.alt || "Generated image"}</p>
         </div>
@@ -181,6 +224,7 @@ function SectionImage({ className, image }) {
 
   return (
     <img
+      ref={containerRef}
       className={className}
       src={image.url}
       alt={image.alt || "Website section image"}

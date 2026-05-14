@@ -191,6 +191,20 @@ function sortProjectsByRecent(projects = []) {
   return [...projects].sort((first, second) => projectTimestamp(second) - projectTimestamp(first));
 }
 
+function mergeProjects(primaryProjects = [], secondaryProjects = []) {
+  const projectsById = new Map();
+
+  [...secondaryProjects, ...primaryProjects].forEach((project) => {
+    if (!project?.id) return;
+    projectsById.set(project.id, {
+      ...(projectsById.get(project.id) || {}),
+      ...project
+    });
+  });
+
+  return sortProjectsByRecent([...projectsById.values()]);
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
@@ -214,7 +228,7 @@ export default function DashboardPage() {
 
     fetchProjects({ force: true })
       .then((data) => {
-        if (!cancelled) setProjects(sortProjectsByRecent(data || []));
+        if (!cancelled) setProjects((currentProjects) => mergeProjects(data || [], currentProjects));
       })
       .catch(async (requestError) => {
         if (cancelled) return;

@@ -2,7 +2,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { randomUUID } from "crypto";
 import { resolveSectionImages } from "./geminiImageResolver.js";
 
-const GEMINI_TEXT_TIMEOUT_MS = Number(process.env.GEMINI_TEXT_TIMEOUT_MS || 12000);
+const GEMINI_TEXT_TIMEOUT_MS = Number(process.env.GEMINI_TEXT_TIMEOUT_MS || 20000);
 const GEMINI_ASSISTANT_TIMEOUT_MS = Number(process.env.GEMINI_ASSISTANT_TIMEOUT_MS || 10000);
 
 function withTimeout(promise, timeoutMs, label) {
@@ -851,10 +851,16 @@ Keep body copy polished and specific. Make the content suitable for responsive l
 function modelCandidates() {
   return [...new Set([
     process.env.GEMINI_MODEL,
-    "gemini-2.0-flash-lite",
-    "gemini-2.0-flash",
     "gemini-2.5-flash"
   ].filter(Boolean))];
+}
+
+function geminiUnavailableError(message, details = []) {
+  const error = new Error(message);
+  error.status = 503;
+  error.code = "GEMINI_UNAVAILABLE";
+  error.details = details.slice(0, 3).join(" | ");
+  return error;
 }
 
 export async function generateWebsite(prompt, options = {}) {
@@ -863,7 +869,7 @@ export async function generateWebsite(prompt, options = {}) {
     : undefined;
 
   if (!process.env.GEMINI_API_KEY) {
-    return withImages(fallbackWebsiteDraft(prompt), prompt, imageOptions);
+    throw geminiUnavailableError("Gemini API key is missing. Add GEMINI_API_KEY to generate real website content.");
   }
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -884,8 +890,8 @@ export async function generateWebsite(prompt, options = {}) {
     }
   }
 
-  console.warn("Gemini generation failed. Falling back to local generator.", errors);
-  return withImages(fallbackWebsiteDraft(prompt), prompt, imageOptions);
+  console.warn("Gemini generation failed.", errors);
+  throw geminiUnavailableError("Gemini could not generate the website right now. Please try again.", errors);
 }
 
 export async function assistWebsiteEdit(project, instruction) {

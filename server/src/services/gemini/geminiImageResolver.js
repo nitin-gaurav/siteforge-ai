@@ -49,7 +49,7 @@ function fallbackWebsiteImage(query = "", index = 0) {
   <circle cx="1120" cy="180" r="185" fill="${foreground}" opacity=".14"/>
   <circle cx="250" cy="720" r="230" fill="${foreground}" opacity=".10"/>
   <rect x="92" y="116" width="1216" height="668" rx="44" fill="${foreground}" opacity=".08"/>
-  <text x="104" y="430" fill="${foreground}" font-family="Arial, sans-serif" font-size="54" font-weight="800">Gemini image preview</text>
+  <text x="104" y="430" fill="${foreground}" font-family="Arial, sans-serif" font-size="54" font-weight="800">Image preview</text>
   <text x="104" y="505" fill="${foreground}" opacity=".78" font-family="Arial, sans-serif" font-size="34">${safeLabel}</text>
 </svg>`.trim();
 

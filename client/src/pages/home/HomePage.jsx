@@ -50,10 +50,10 @@ const toneOptions = [
 ];
 
 const websiteLoadingSteps = [
-  "Drafting the page structure...",
-  "Writing sections and calls to action...",
-  "Matching visual direction...",
-  "Saving your website project..."
+  "Drafting your website...",
+  "Writing editable sections...",
+  "Preparing the preview...",
+  "Opening your workspace..."
 ];
 
 const imageLoadingSteps = [

@@ -2,6 +2,18 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { randomUUID } from "crypto";
 import { resolveSectionImages } from "./geminiImageResolver.js";
 
+const GEMINI_TEXT_TIMEOUT_MS = Number(process.env.GEMINI_TEXT_TIMEOUT_MS || 12000);
+const GEMINI_ASSISTANT_TIMEOUT_MS = Number(process.env.GEMINI_ASSISTANT_TIMEOUT_MS || 10000);
+
+function withTimeout(promise, timeoutMs, label) {
+  let timeout;
+  const timeoutPromise = new Promise((_, reject) => {
+    timeout = setTimeout(() => reject(new Error(`${label} timed out after ${timeoutMs}ms`)), timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeout));
+}
+
 function promptKind(prompt = "") {
   const lowerPrompt = prompt.toLowerCase();
 
@@ -838,12 +850,10 @@ Keep body copy polished and specific. Make the content suitable for responsive l
 
 function modelCandidates() {
   return [...new Set([
-    "gemini-2.5-flash",
     process.env.GEMINI_MODEL,
-    "gemini-2.5-pro",
-    "gemini-2.0-flash",
     "gemini-2.0-flash-lite",
-    "gemini-1.5-flash-latest"
+    "gemini-2.0-flash",
+    "gemini-2.5-flash"
   ].filter(Boolean))];
 }
 
@@ -862,7 +872,11 @@ export async function generateWebsite(prompt, options = {}) {
   for (const modelName of modelCandidates()) {
     try {
       const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(buildPrompt(prompt));
+      const result = await withTimeout(
+        model.generateContent(buildPrompt(prompt)),
+        GEMINI_TEXT_TIMEOUT_MS,
+        modelName
+      );
       const text = result.response.text();
       return withImages(normalizeWebsite(parseJson(text), prompt), imageOptions);
     } catch (error) {
@@ -891,7 +905,11 @@ export async function assistWebsiteEdit(project, instruction) {
   for (const modelName of modelCandidates()) {
     try {
       const model = genAI.getGenerativeModel({ model: modelName });
-      const result = await model.generateContent(buildAssistantPrompt(project, trimmedInstruction));
+      const result = await withTimeout(
+        model.generateContent(buildAssistantPrompt(project, trimmedInstruction)),
+        GEMINI_ASSISTANT_TIMEOUT_MS,
+        modelName
+      );
       const text = result.response.text();
       return normalizeAssistantResponse(parseJson(text), project, trimmedInstruction);
     } catch (error) {

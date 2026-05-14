@@ -38,7 +38,7 @@ function inferIndustryTag(project) {
   return rules.find(([, keywords]) => keywords.some((keyword) => text.includes(keyword)))?.[0] || "Website";
 }
 
-function ProjectCard({ project, onDelete, onRequestRename, deleting }) {
+function ProjectCard({ project, onDelete, onRequestRename, onMissing, deleting }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const updatedAt = new Date(project.updated_at || project.created_at);
   const previewImage = project.preview_image_url || project.sections?.find((section) => section.image?.url)?.image?.url;
@@ -70,8 +70,8 @@ function ProjectCard({ project, onDelete, onRequestRename, deleting }) {
   }
 
   function prefetchProject() {
-    fetchProjectDetail(project.id).catch(() => {
-      // The editor route will surface any real loading error if the user opens it.
+    fetchProjectDetail(project.id).catch((error) => {
+      if (error.status === 404) onMissing(project.id);
     });
   }
 
@@ -368,6 +368,10 @@ export default function DashboardPage() {
                 project={project}
                 onDelete={deleteProject}
                 onRequestRename={openRename}
+                onMissing={(id) => {
+                  removeCachedProject(id);
+                  setProjects((currentProjects) => currentProjects.filter((item) => item.id !== id));
+                }}
                 deleting={deletingId === project.id}
               />
             ))}

@@ -182,6 +182,15 @@ function SkeletonCard() {
   );
 }
 
+function projectTimestamp(project) {
+  const timestamp = Date.parse(project?.updated_at || project?.created_at || "");
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function sortProjectsByRecent(projects = []) {
+  return [...projects].sort((first, second) => projectTimestamp(second) - projectTimestamp(first));
+}
+
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
@@ -199,13 +208,13 @@ export default function DashboardPage() {
     const cachedProjects = readCachedProjects();
 
     if (cachedProjects.length) {
-      setProjects(cachedProjects);
+      setProjects(sortProjectsByRecent(cachedProjects));
       setLoading(false);
     }
 
     fetchProjects({ force: true })
       .then((data) => {
-        if (!cancelled) setProjects(data || []);
+        if (!cancelled) setProjects(sortProjectsByRecent(data || []));
       })
       .catch(async (requestError) => {
         if (cancelled) return;
@@ -251,8 +260,8 @@ export default function DashboardPage() {
       const data = await api.updateProject(project.id, {
         name
       });
-      setProjects((currentProjects) => currentProjects.map((item) => (item.id === project.id ? data.project : item)));
-      writeCachedProjects(projects.map((item) => (item.id === project.id ? data.project : item)));
+      setProjects((currentProjects) => sortProjectsByRecent(currentProjects.map((item) => (item.id === project.id ? data.project : item))));
+      writeCachedProjects(sortProjectsByRecent(projects.map((item) => (item.id === project.id ? data.project : item))));
       writeCachedProject(data.project);
     } catch (requestError) {
       setProjects(previousProjects);

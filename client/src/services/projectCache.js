@@ -45,6 +45,20 @@ function sortProjectsByRecent(projects = []) {
   return [...projects].sort((first, second) => projectTimestamp(second) - projectTimestamp(first));
 }
 
+function mergeProjectLists(baseProjects = [], patchProjects = []) {
+  const projectsById = new Map(baseProjects.filter((project) => project?.id).map((project) => [project.id, project]));
+
+  patchProjects.forEach((project) => {
+    if (!project?.id) return;
+    projectsById.set(project.id, {
+      ...(projectsById.get(project.id) || {}),
+      ...project
+    });
+  });
+
+  return sortProjectsByRecent([...projectsById.values()]);
+}
+
 function summarizeProject(project) {
   const sections = Array.isArray(project.sections) ? project.sections : [];
 
@@ -110,17 +124,23 @@ export function readCachedProjects() {
   }
 }
 
-export function writeCachedProjects(projects, { complete = true } = {}) {
+export function writeCachedProjects(projects, { complete = true, preserveExistingComplete = false } = {}) {
   try {
+    const existingProjects = projectListMemoryCache || readCachedProjects();
+    const existingComplete = hasCompleteProjectListSnapshot();
     const nextProjects = sortProjectsByRecent(
       (projects || [])
         .filter((project) => !project?.user_id || activeProjectCacheUserId === "anonymous" || project.user_id === activeProjectCacheUserId)
         .map(summarizeProject)
     );
-    setProjectListSnapshot(nextProjects);
-    localStorage.setItem(scopedStorageKey(projectCacheKey), JSON.stringify(nextProjects));
-    projectListCompleteMemoryCache = complete;
-    writeProjectListMeta({ complete, updated_at: new Date().toISOString() });
+    const shouldPreserveExistingCompleteList = preserveExistingComplete && existingComplete && existingProjects.length > nextProjects.length;
+    const projectsToWrite = shouldPreserveExistingCompleteList ? mergeProjectLists(existingProjects, nextProjects) : nextProjects;
+    const nextComplete = existingComplete || complete;
+
+    setProjectListSnapshot(projectsToWrite);
+    localStorage.setItem(scopedStorageKey(projectCacheKey), JSON.stringify(projectsToWrite));
+    projectListCompleteMemoryCache = nextComplete;
+    writeProjectListMeta({ complete: nextComplete, updated_at: new Date().toISOString() });
   } catch {
     // Ignore storage quota errors. The network result is still returned.
   }
@@ -178,16 +198,16 @@ export function writeCachedProject(project) {
   projectDetailMemoryCache.set(normalizedProject.id, normalizedProject);
 
   try {
-    const cachedProjects = readCachedProjects();
+    const complete = hasCompleteProjectListSnapshot();
+    const cachedProjects = complete ? getProjectListSnapshot() : readCachedProjects();
     const existingIndex = cachedProjects.findIndex((item) => item.id === normalizedProject.id);
     const nextProjects =
       existingIndex < 0
         ? sortProjectsByRecent([normalizedProject, ...cachedProjects])
         : sortProjectsByRecent(cachedProjects.map((item) => (item.id === normalizedProject.id ? { ...item, ...normalizedProject } : item)));
-    const complete = hasCompleteProjectListSnapshot();
 
     if (hasInlineRasterImage(normalizedProject)) {
-      writeCachedProjects(nextProjects, { complete });
+      writeCachedProjects(nextProjects, { complete, preserveExistingComplete: true });
       return;
     }
 
@@ -195,7 +215,7 @@ export function writeCachedProject(project) {
     if (serializedProject.length > maxPersistentProjectDetailChars) return;
 
     localStorage.setItem(projectDetailCacheKey(normalizedProject.id), serializedProject);
-    writeCachedProjects(nextProjects, { complete });
+    writeCachedProjects(nextProjects, { complete, preserveExistingComplete: true });
   } catch {
     // Ignore storage quota errors. The network result is still returned.
   }

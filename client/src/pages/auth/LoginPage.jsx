@@ -90,8 +90,8 @@ export default function LoginPage() {
             <div className="mx-auto w-full max-w-sm">
               <div className="auth-stagger relative mb-5 grid grid-cols-2 rounded-2xl bg-[#f3f1fb] p-1.5 sm:mb-6">
                 <span
-                  className={`absolute bottom-1.5 top-1.5 w-[calc(50%-6px)] rounded-xl bg-white shadow-[0_10px_26px_rgba(77,63,148,0.14)] transition-transform duration-300 ease-spring ${
-                    isSignin ? "translate-x-0" : "translate-x-[calc(100%+6px)]"
+                  className={`absolute bottom-1.5 top-1.5 w-[calc((100%-12px)/2)] rounded-xl bg-white shadow-[0_10px_26px_rgba(77,63,148,0.14)] transition-[left] duration-300 ease-spring ${
+                    isSignin ? "left-1.5" : "left-[calc(50%)]"
                   }`}
                 />
                 {[

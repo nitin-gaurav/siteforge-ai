@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
-import { fetchProjectDetail, fetchProjects, readCachedProjects } from "../../services/projectCache.js";
+import { fetchProjectDetail, fetchRecentProjects, readCachedProjects } from "../../services/projectCache.js";
 import { supabase } from "../../services/supabaseClient.js";
 
 const recentProjectStorageKey = "siteforge_recent_project_ids";
@@ -49,17 +49,21 @@ function readRecentProjectCache() {
 }
 
 function writeRecentProjectCache(projects) {
-  localStorage.setItem(
-    recentProjectCacheKey,
-    JSON.stringify(
-      projects.slice(0, 3).map((project) => ({
-        id: project.id,
-        name: project.name || "Untitled website",
-        created_at: project.created_at,
-        updated_at: project.updated_at
-      }))
-    )
-  );
+  try {
+    localStorage.setItem(
+      recentProjectCacheKey,
+      JSON.stringify(
+        projects.slice(0, 3).map((project) => ({
+          id: project.id,
+          name: project.name || "Untitled website",
+          created_at: project.created_at,
+          updated_at: project.updated_at
+        }))
+      )
+    );
+  } catch {
+    // Ignore storage quota errors. The in-memory recent list is already updated.
+  }
 }
 
 function removeRecentProject(projectId) {
@@ -158,7 +162,7 @@ export default function AppShell({ children }) {
     }
 
     setRecentLoading(true);
-    fetchProjects()
+    fetchRecentProjects(recentIds)
       .then((data) => {
         if (cancelled) return;
         const projects = data || [];

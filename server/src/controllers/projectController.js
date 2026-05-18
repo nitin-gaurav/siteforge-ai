@@ -71,11 +71,24 @@ function summarizeProject(project) {
 }
 
 export async function listProjects(req, res) {
-  const { data, error } = await supabaseAdmin
+  const rawLimit = Number.parseInt(req.query.limit, 10);
+  const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : null;
+  const ids = String(req.query.ids || "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean)
+    .slice(0, 25);
+
+  let query = supabaseAdmin
     .from("projects")
     .select("id,user_id,name,prompt,theme,created_at,updated_at")
     .eq("user_id", req.user.id)
     .order("updated_at", { ascending: false });
+
+  if (ids.length) query = query.in("id", ids);
+  if (limit) query = query.limit(limit);
+
+  const { data, error } = await query;
 
   if (error) throw error;
   res.json({ projects: (data || []).map(summarizeProject) });

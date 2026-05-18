@@ -3,6 +3,7 @@ import { api } from "./api.js";
 const projectCacheKey = "siteforge_project_list_cache";
 const projectDetailCachePrefix = "siteforge_project_detail:";
 let pendingProjectsRequest = null;
+let pendingRecentProjectsRequest = null;
 const pendingProjectDetailRequests = new Map();
 const projectDetailMemoryCache = new Map();
 let projectListMemoryCache = null;
@@ -195,7 +196,7 @@ export async function fetchProjectDetail(id, { force = false } = {}) {
 }
 
 export async function fetchProjects({ force = false } = {}) {
-  if (pendingProjectsRequest) return pendingProjectsRequest;
+  if (pendingProjectsRequest && !force) return pendingProjectsRequest;
 
   pendingProjectsRequest = api
     .listProjects()
@@ -209,4 +210,18 @@ export async function fetchProjects({ force = false } = {}) {
     });
 
   return pendingProjectsRequest;
+}
+
+export async function fetchRecentProjects(ids = []) {
+  if (pendingRecentProjectsRequest) return pendingRecentProjectsRequest;
+
+  const recentIds = ids.filter(Boolean).slice(0, 8);
+  pendingRecentProjectsRequest = api
+    .listProjects(recentIds.length ? { ids: recentIds } : { limit: 3 })
+    .then((data) => data.projects || [])
+    .finally(() => {
+      pendingRecentProjectsRequest = null;
+    });
+
+  return pendingRecentProjectsRequest;
 }

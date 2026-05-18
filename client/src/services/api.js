@@ -96,8 +96,16 @@ async function request(path, options = {}) {
   return payload;
 }
 
+function projectListPath(options = {}) {
+  const params = new URLSearchParams();
+  if (options.limit) params.set("limit", String(options.limit));
+  if (Array.isArray(options.ids) && options.ids.length) params.set("ids", options.ids.filter(Boolean).join(","));
+  const query = params.toString();
+  return query ? `/projects?${query}` : "/projects";
+}
+
 export const api = {
-  listProjects: () => request("/projects"),
+  listProjects: (options) => request(projectListPath(options)),
   getProject: (id) => request(`/projects/${id}`),
   createProject: (project) => request("/projects", { method: "POST", body: JSON.stringify(project) }),
   updateProject: (id, project) => request(`/projects/${id}`, { method: "PUT", body: JSON.stringify(project) }),

@@ -5,7 +5,16 @@ import AppShell from "../../components/ui/AppShell.jsx";
 import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import { api } from "../../services/api.js";
-import { fetchProjectDetail, fetchProjects, getProjectListSnapshot, removeCachedProject, subscribeProjectList, writeCachedProject, writeCachedProjects } from "../../services/projectCache.js";
+import {
+  fetchProjectDetail,
+  fetchProjects,
+  getProjectListSnapshot,
+  hasCompleteProjectListSnapshot,
+  removeCachedProject,
+  subscribeProjectList,
+  writeCachedProject,
+  writeCachedProjects
+} from "../../services/projectCache.js";
 import { supabase } from "../../services/supabaseClient.js";
 
 function formatTimeAgo(date) {
@@ -194,7 +203,7 @@ function sortProjectsByRecent(projects = []) {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState(() => sortProjectsByRecent(getProjectListSnapshot()));
-  const [loading, setLoading] = useState(() => getProjectListSnapshot().length === 0);
+  const [loading, setLoading] = useState(() => !hasCompleteProjectListSnapshot());
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -208,12 +217,12 @@ export default function DashboardPage() {
     const unsubscribe = subscribeProjectList((nextProjects) => {
       if (!cancelled) {
         setProjects(sortProjectsByRecent(nextProjects));
-        setLoading(false);
+        if (hasCompleteProjectListSnapshot()) setLoading(false);
       }
     });
     const cachedProjects = getProjectListSnapshot();
 
-    if (cachedProjects.length) {
+    if (cachedProjects.length && hasCompleteProjectListSnapshot()) {
       setProjects(sortProjectsByRecent(cachedProjects));
       setLoading(false);
     }

@@ -1,6 +1,7 @@
 import { api } from "./api.js";
 
 const projectCacheKey = "siteforge_project_list_cache";
+const projectCacheMetaKey = "siteforge_project_list_meta";
 const projectDetailCachePrefix = "siteforge_project_detail:";
 let activeProjectCacheUserId = "anonymous";
 let pendingProjectsRequest = null;
@@ -8,6 +9,7 @@ let pendingRecentProjectsRequest = null;
 const pendingProjectDetailRequests = new Map();
 const projectDetailMemoryCache = new Map();
 let projectListMemoryCache = null;
+let projectListCompleteMemoryCache = false;
 const projectListListeners = new Set();
 const maxPersistentProjectDetailChars = 900000;
 
@@ -29,6 +31,7 @@ export function setProjectCacheUser(userId) {
   pendingProjectDetailRequests.clear();
   projectDetailMemoryCache.clear();
   projectListMemoryCache = null;
+  projectListCompleteMemoryCache = false;
   projectListListeners.forEach((listener) => listener([]));
 }
 
@@ -68,10 +71,29 @@ function setProjectListSnapshot(projects) {
   projectListListeners.forEach((listener) => listener(projectListMemoryCache));
 }
 
+function readProjectListMeta() {
+  try {
+    const meta = JSON.parse(localStorage.getItem(scopedStorageKey(projectCacheMetaKey)) || "{}");
+    return meta && typeof meta === "object" ? meta : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeProjectListMeta(meta) {
+  localStorage.setItem(scopedStorageKey(projectCacheMetaKey), JSON.stringify(meta));
+}
+
 export function getProjectListSnapshot() {
   if (projectListMemoryCache) return projectListMemoryCache;
   projectListMemoryCache = readCachedProjects();
   return projectListMemoryCache;
+}
+
+export function hasCompleteProjectListSnapshot() {
+  if (projectListCompleteMemoryCache) return true;
+  projectListCompleteMemoryCache = readProjectListMeta().complete === true;
+  return projectListCompleteMemoryCache;
 }
 
 export function subscribeProjectList(listener) {
@@ -88,7 +110,7 @@ export function readCachedProjects() {
   }
 }
 
-export function writeCachedProjects(projects) {
+export function writeCachedProjects(projects, { complete = true } = {}) {
   try {
     const nextProjects = sortProjectsByRecent(
       (projects || [])
@@ -97,6 +119,8 @@ export function writeCachedProjects(projects) {
     );
     setProjectListSnapshot(nextProjects);
     localStorage.setItem(scopedStorageKey(projectCacheKey), JSON.stringify(nextProjects));
+    projectListCompleteMemoryCache = complete;
+    writeProjectListMeta({ complete, updated_at: new Date().toISOString() });
   } catch {
     // Ignore storage quota errors. The network result is still returned.
   }
@@ -104,7 +128,7 @@ export function writeCachedProjects(projects) {
 
 export function updateCachedProjects(updater) {
   const nextProjects = updater(readCachedProjects());
-  writeCachedProjects(nextProjects);
+  writeCachedProjects(nextProjects, { complete: hasCompleteProjectListSnapshot() });
   return nextProjects;
 }
 
@@ -154,13 +178,16 @@ export function writeCachedProject(project) {
   projectDetailMemoryCache.set(normalizedProject.id, normalizedProject);
 
   try {
-    if (hasInlineRasterImage(normalizedProject)) {
-      updateCachedProjects((projects) => {
-        const existingIndex = projects.findIndex((item) => item.id === normalizedProject.id);
-        if (existingIndex < 0) return sortProjectsByRecent([normalizedProject, ...projects]);
+    const cachedProjects = readCachedProjects();
+    const existingIndex = cachedProjects.findIndex((item) => item.id === normalizedProject.id);
+    const nextProjects =
+      existingIndex < 0
+        ? sortProjectsByRecent([normalizedProject, ...cachedProjects])
+        : sortProjectsByRecent(cachedProjects.map((item) => (item.id === normalizedProject.id ? { ...item, ...normalizedProject } : item)));
+    const complete = hasCompleteProjectListSnapshot();
 
-        return sortProjectsByRecent(projects.map((item) => (item.id === normalizedProject.id ? { ...item, ...normalizedProject } : item)));
-      });
+    if (hasInlineRasterImage(normalizedProject)) {
+      writeCachedProjects(nextProjects, { complete });
       return;
     }
 
@@ -168,12 +195,7 @@ export function writeCachedProject(project) {
     if (serializedProject.length > maxPersistentProjectDetailChars) return;
 
     localStorage.setItem(projectDetailCacheKey(normalizedProject.id), serializedProject);
-    updateCachedProjects((projects) => {
-      const existingIndex = projects.findIndex((item) => item.id === normalizedProject.id);
-      if (existingIndex < 0) return sortProjectsByRecent([normalizedProject, ...projects]);
-
-      return sortProjectsByRecent(projects.map((item) => (item.id === normalizedProject.id ? { ...item, ...normalizedProject } : item)));
-    });
+    writeCachedProjects(nextProjects, { complete });
   } catch {
     // Ignore storage quota errors. The network result is still returned.
   }

@@ -11,7 +11,7 @@ export async function generateSite(req, res) {
   }
 
   const website = await generateWebsite(prompt, {
-    includeImages: req.body.includeImages === true
+    includeImages: req.body.includeImages !== false
   });
   res.json(website);
 }

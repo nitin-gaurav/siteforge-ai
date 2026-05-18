@@ -161,20 +161,55 @@ function CtaButton({ children, section, sections = [], theme, variant = "primary
   );
 }
 
+function escapeImageText(value = "") {
+  return `${value}`
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+function sectionPlaceholderImage(image = {}) {
+  const label = (image.query || image.alt || "Website image").slice(0, 72);
+  const svg = `
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop stop-color="#111827"/>
+      <stop offset="1" stop-color="#312e81"/>
+    </linearGradient>
+  </defs>
+  <rect width="1400" height="900" fill="url(#bg)"/>
+  <circle cx="1120" cy="180" r="185" fill="#f8fafc" opacity=".14"/>
+  <circle cx="250" cy="720" r="230" fill="#f8fafc" opacity=".10"/>
+  <rect x="92" y="116" width="1216" height="668" rx="44" fill="#f8fafc" opacity=".08"/>
+  <text x="104" y="430" fill="#f8fafc" font-family="Arial, sans-serif" font-size="54" font-weight="800">Image preview</text>
+  <text x="104" y="505" fill="#f8fafc" opacity=".78" font-family="Arial, sans-serif" font-size="34">${escapeImageText(label)}</text>
+</svg>`.trim();
+
+  return {
+    ...image,
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`,
+    alt: image.alt || label,
+    credit: "Local fallback graphic"
+  };
+}
+
 function SectionImage({ className, image }) {
+  const displayImage = image?.url || !image?.query ? image : sectionPlaceholderImage(image);
   const [failed, setFailed] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(false);
   const containerRef = React.useRef(null);
-  const isFallbackPlaceholder = image?.credit?.startsWith("Local fallback");
-  const isInlineImage = image?.url?.startsWith("data:image/");
+  const isFallbackPlaceholder = displayImage?.credit?.startsWith("Local fallback");
+  const isInlineImage = displayImage?.url?.startsWith("data:image/");
 
   useEffect(() => {
     setFailed(false);
     setShouldLoad(false);
-  }, [image?.url]);
+  }, [displayImage?.url]);
 
   useEffect(() => {
-    if (!image?.url || failed) return undefined;
+    if (!displayImage?.url || failed) return undefined;
 
     if (!isInlineImage || isFallbackPlaceholder) {
       setShouldLoad(true);
@@ -206,16 +241,16 @@ function SectionImage({ className, image }) {
       observer._cancelScheduledLoad?.();
       observer.disconnect();
     };
-  }, [failed, image?.url, isFallbackPlaceholder, isInlineImage]);
+  }, [displayImage?.url, failed, isFallbackPlaceholder, isInlineImage]);
 
-  if (!image?.url || failed || !shouldLoad) {
+  if (!displayImage?.url || failed || !shouldLoad) {
     return (
       <div ref={containerRef} className={`${className} grid place-items-center overflow-hidden bg-[linear-gradient(135deg,#0f172a,#312e81)] p-6 text-center text-white`}>
         <div className="grid max-w-xs gap-3">
           <p className="text-xs font-black uppercase tracking-[0.16em] text-blue-100">
             {isFallbackPlaceholder ? "AI image pending" : shouldLoad ? "Image preview" : "Loading image"}
           </p>
-          <p className="text-sm font-bold leading-6 text-white/80">{image?.query || image?.alt || "Generated image"}</p>
+          <p className="text-sm font-bold leading-6 text-white/80">{displayImage?.query || displayImage?.alt || "Generated image"}</p>
         </div>
       </div>
     );
@@ -225,8 +260,8 @@ function SectionImage({ className, image }) {
     <img
       ref={containerRef}
       className={className}
-      src={image.url}
-      alt={image.alt || "Website section image"}
+      src={displayImage.url}
+      alt={displayImage.alt || "Website section image"}
       loading="lazy"
       onError={() => setFailed(true)}
     />

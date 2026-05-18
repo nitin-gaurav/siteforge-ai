@@ -2,6 +2,7 @@ import { api } from "./api.js";
 
 const projectCacheKey = "siteforge_project_list_cache";
 const projectDetailCachePrefix = "siteforge_project_detail:";
+let activeProjectCacheUserId = "anonymous";
 let pendingProjectsRequest = null;
 let pendingRecentProjectsRequest = null;
 const pendingProjectDetailRequests = new Map();
@@ -9,6 +10,27 @@ const projectDetailMemoryCache = new Map();
 let projectListMemoryCache = null;
 const projectListListeners = new Set();
 const maxPersistentProjectDetailChars = 900000;
+
+function scopedStorageKey(key) {
+  return `${key}:${activeProjectCacheUserId}`;
+}
+
+export function getProjectCacheUserId() {
+  return activeProjectCacheUserId;
+}
+
+export function setProjectCacheUser(userId) {
+  const nextUserId = userId || "anonymous";
+  if (nextUserId === activeProjectCacheUserId) return;
+
+  activeProjectCacheUserId = nextUserId;
+  pendingProjectsRequest = null;
+  pendingRecentProjectsRequest = null;
+  pendingProjectDetailRequests.clear();
+  projectDetailMemoryCache.clear();
+  projectListMemoryCache = null;
+  projectListListeners.forEach((listener) => listener([]));
+}
 
 function projectTimestamp(project) {
   const value = project?.updated_at || project?.created_at || "";
@@ -59,7 +81,7 @@ export function subscribeProjectList(listener) {
 
 export function readCachedProjects() {
   try {
-    const cached = JSON.parse(localStorage.getItem(projectCacheKey) || "[]");
+    const cached = JSON.parse(localStorage.getItem(scopedStorageKey(projectCacheKey)) || "[]");
     return Array.isArray(cached) ? sortProjectsByRecent(cached.filter((project) => project?.id)) : [];
   } catch {
     return [];
@@ -68,9 +90,13 @@ export function readCachedProjects() {
 
 export function writeCachedProjects(projects) {
   try {
-    const nextProjects = sortProjectsByRecent((projects || []).map(summarizeProject));
+    const nextProjects = sortProjectsByRecent(
+      (projects || [])
+        .filter((project) => !project?.user_id || activeProjectCacheUserId === "anonymous" || project.user_id === activeProjectCacheUserId)
+        .map(summarizeProject)
+    );
     setProjectListSnapshot(nextProjects);
-    localStorage.setItem(projectCacheKey, JSON.stringify(nextProjects));
+    localStorage.setItem(scopedStorageKey(projectCacheKey), JSON.stringify(nextProjects));
   } catch {
     // Ignore storage quota errors. The network result is still returned.
   }
@@ -83,7 +109,7 @@ export function updateCachedProjects(updater) {
 }
 
 function projectDetailCacheKey(id) {
-  return `${projectDetailCachePrefix}${id}`;
+  return scopedStorageKey(`${projectDetailCachePrefix}${id}`);
 }
 
 function normalizeProjectDetail(project) {
@@ -123,6 +149,7 @@ export function readCachedProject(id) {
 export function writeCachedProject(project) {
   const normalizedProject = normalizeProjectDetail(project);
   if (!normalizedProject) return;
+  if (normalizedProject.user_id && activeProjectCacheUserId !== "anonymous" && normalizedProject.user_id !== activeProjectCacheUserId) return;
 
   projectDetailMemoryCache.set(normalizedProject.id, normalizedProject);
 
@@ -166,6 +193,7 @@ export function removeCachedProject(id) {
 
 export async function fetchProjectDetail(id, { force = false } = {}) {
   if (!id) return null;
+  const requestUserId = activeProjectCacheUserId;
   if (!force) {
     const cachedProject = readCachedProject(id);
     if (cachedProject) return cachedProject;
@@ -178,6 +206,7 @@ export async function fetchProjectDetail(id, { force = false } = {}) {
   const request = api
     .getProject(id)
     .then(({ project }) => {
+      if (requestUserId !== activeProjectCacheUserId) return project;
       writeCachedProject(project);
       return project;
     })
@@ -198,11 +227,12 @@ export async function fetchProjectDetail(id, { force = false } = {}) {
 export async function fetchProjects({ force = false } = {}) {
   if (pendingProjectsRequest && !force) return pendingProjectsRequest;
 
+  const requestUserId = activeProjectCacheUserId;
   pendingProjectsRequest = api
     .listProjects()
     .then((data) => {
       const projects = sortProjectsByRecent(data.projects || []);
-      writeCachedProjects(projects);
+      if (requestUserId === activeProjectCacheUserId) writeCachedProjects(projects);
       return projects;
     })
     .finally(() => {
@@ -216,9 +246,10 @@ export async function fetchRecentProjects(ids = []) {
   if (pendingRecentProjectsRequest) return pendingRecentProjectsRequest;
 
   const recentIds = ids.filter(Boolean).slice(0, 8);
+  const requestUserId = activeProjectCacheUserId;
   pendingRecentProjectsRequest = api
     .listProjects(recentIds.length ? { ids: recentIds } : { limit: 3 })
-    .then((data) => data.projects || [])
+    .then((data) => (requestUserId === activeProjectCacheUserId ? data.projects || [] : []))
     .finally(() => {
       pendingRecentProjectsRequest = null;
     });

@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { setProjectCacheUser } from "../services/projectCache.js";
 import { supabase } from "../services/supabaseClient.js";
 
 export function useAuth() {
@@ -12,10 +13,12 @@ export function useAuth() {
       .getSession()
       .then(({ data }) => {
         if (!mounted) return;
+        setProjectCacheUser(data.session?.user?.id);
         setSession(data.session);
       })
       .catch(() => {
         if (!mounted) return;
+        setProjectCacheUser(null);
         setSession(null);
       })
       .finally(() => {
@@ -26,6 +29,7 @@ export function useAuth() {
     const {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setProjectCacheUser(nextSession?.user?.id);
       setSession(nextSession);
       setLoading(false);
     });

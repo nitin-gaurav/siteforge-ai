@@ -12,29 +12,33 @@ import {
 } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth.js";
-import { fetchProjectDetail, fetchRecentProjects, readCachedProjects } from "../../services/projectCache.js";
+import { fetchProjectDetail, fetchRecentProjects, getProjectCacheUserId, readCachedProjects } from "../../services/projectCache.js";
 import { supabase } from "../../services/supabaseClient.js";
 
 const recentProjectStorageKey = "siteforge_recent_project_ids";
 const recentProjectCacheKey = "siteforge_recent_project_cache";
 
-function readRecentProjectIds() {
+function scopedRecentStorageKey(key, userId) {
+  return `${key}:${userId || getProjectCacheUserId()}`;
+}
+
+function readRecentProjectIds(userId) {
   try {
-    return JSON.parse(localStorage.getItem(recentProjectStorageKey) || "[]").filter(Boolean);
+    return JSON.parse(localStorage.getItem(scopedRecentStorageKey(recentProjectStorageKey, userId)) || "[]").filter(Boolean);
   } catch {
     return [];
   }
 }
 
-function writeRecentProjectId(projectId) {
-  const nextIds = [projectId, ...readRecentProjectIds().filter((id) => id !== projectId)].slice(0, 8);
-  localStorage.setItem(recentProjectStorageKey, JSON.stringify(nextIds));
+function writeRecentProjectId(projectId, userId) {
+  const nextIds = [projectId, ...readRecentProjectIds(userId).filter((id) => id !== projectId)].slice(0, 8);
+  localStorage.setItem(scopedRecentStorageKey(recentProjectStorageKey, userId), JSON.stringify(nextIds));
   return nextIds;
 }
 
-function readRecentProjectCache() {
+function readRecentProjectCache(userId) {
   try {
-    return JSON.parse(localStorage.getItem(recentProjectCacheKey) || "[]")
+    return JSON.parse(localStorage.getItem(scopedRecentStorageKey(recentProjectCacheKey, userId)) || "[]")
       .filter((project) => project?.id)
       .map((project) => ({
         id: project.id,
@@ -48,10 +52,10 @@ function readRecentProjectCache() {
   }
 }
 
-function writeRecentProjectCache(projects) {
+function writeRecentProjectCache(projects, userId) {
   try {
     localStorage.setItem(
-      recentProjectCacheKey,
+      scopedRecentStorageKey(recentProjectCacheKey, userId),
       JSON.stringify(
         projects.slice(0, 3).map((project) => ({
           id: project.id,
@@ -66,11 +70,11 @@ function writeRecentProjectCache(projects) {
   }
 }
 
-function removeRecentProject(projectId) {
+function removeRecentProject(projectId, userId) {
   try {
-    const nextIds = readRecentProjectIds().filter((id) => id !== projectId);
-    localStorage.setItem(recentProjectStorageKey, JSON.stringify(nextIds));
-    writeRecentProjectCache(readRecentProjectCache().filter((project) => project.id !== projectId));
+    const nextIds = readRecentProjectIds(userId).filter((id) => id !== projectId);
+    localStorage.setItem(scopedRecentStorageKey(recentProjectStorageKey, userId), JSON.stringify(nextIds));
+    writeRecentProjectCache(readRecentProjectCache(userId).filter((project) => project.id !== projectId), userId);
   } catch {
     // Ignore storage errors. The project list refresh will repair this state.
   }
@@ -137,17 +141,18 @@ export default function AppShell({ children }) {
   const [recentOpen, setRecentOpen] = useState(true);
   const [recentLoading, setRecentLoading] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
-  const [recentProjects, setRecentProjects] = useState(() => readRecentProjectCache());
+  const [recentProjects, setRecentProjects] = useState(() => readRecentProjectCache(getProjectCacheUserId()));
   const profileMenuRef = useRef(null);
   const mobileProfileMenuRef = useRef(null);
 
   const isCreate = location.pathname === "/";
   const isDashboard = location.pathname === "/dashboard";
   const activeProjectId = location.pathname.match(/^\/editor\/([^/]+)/)?.[1];
+  const cacheUserId = user?.id || getProjectCacheUserId();
 
   useEffect(() => {
     let cancelled = false;
-    const recentIds = activeProjectId ? writeRecentProjectId(activeProjectId) : readRecentProjectIds();
+    const recentIds = activeProjectId ? writeRecentProjectId(activeProjectId, cacheUserId) : readRecentProjectIds(cacheUserId);
 
     const cachedProjects = readCachedProjects();
     if (cachedProjects.length) {
@@ -158,7 +163,9 @@ export default function AppShell({ children }) {
         .slice(0, 3);
       const nextRecentProjects = (openedProjects.length ? openedProjects : fallbackProjects).slice(0, 3);
       setRecentProjects(nextRecentProjects);
-      writeRecentProjectCache(nextRecentProjects);
+      writeRecentProjectCache(nextRecentProjects, cacheUserId);
+    } else {
+      setRecentProjects(readRecentProjectCache(cacheUserId));
     }
 
     setRecentLoading(true);
@@ -173,10 +180,10 @@ export default function AppShell({ children }) {
           .slice(0, 3);
         const nextRecentProjects = (openedProjects.length ? openedProjects : fallbackProjects).slice(0, 3);
         setRecentProjects(nextRecentProjects);
-        writeRecentProjectCache(nextRecentProjects);
+        writeRecentProjectCache(nextRecentProjects, cacheUserId);
       })
       .catch(() => {
-        if (!cancelled && !recentProjects.length) setRecentProjects(readRecentProjectCache());
+        if (!cancelled && !recentProjects.length) setRecentProjects(readRecentProjectCache(cacheUserId));
       })
       .finally(() => {
         if (!cancelled) setRecentLoading(false);
@@ -185,7 +192,7 @@ export default function AppShell({ children }) {
     return () => {
       cancelled = true;
     };
-  }, [location.pathname]);
+  }, [location.pathname, cacheUserId]);
 
   useEffect(() => {
     setProfileOpen(false);
@@ -205,6 +212,8 @@ export default function AppShell({ children }) {
   function signOut() {
     setSigningOut(true);
     setProfileOpen(false);
+    localStorage.removeItem(scopedRecentStorageKey(recentProjectStorageKey, cacheUserId));
+    localStorage.removeItem(scopedRecentStorageKey(recentProjectCacheKey, cacheUserId));
     localStorage.removeItem(recentProjectStorageKey);
     localStorage.removeItem(recentProjectCacheKey);
     window.setTimeout(() => navigate("/login", { replace: true }), 120);
@@ -269,7 +278,7 @@ export default function AppShell({ children }) {
                             project={project}
                             active={project.id === activeProjectId}
                             onMissing={(projectId) => {
-                              removeRecentProject(projectId);
+                              removeRecentProject(projectId, cacheUserId);
                               setRecentProjects((projects) => projects.filter((item) => item.id !== projectId));
                             }}
                           />

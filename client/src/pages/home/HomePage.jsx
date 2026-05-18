@@ -6,7 +6,7 @@ import Button from "../../components/ui/Button.jsx";
 import Input from "../../components/ui/Input.jsx";
 import Textarea from "../../components/ui/Textarea.jsx";
 import { api } from "../../services/api.js";
-import { writeCachedProject } from "../../services/projectCache.js";
+import { getProjectCacheUserId, writeCachedProject } from "../../services/projectCache.js";
 import { optimizeProjectImages } from "../../utils/imageOptimizer.js";
 
 const examples = [
@@ -64,6 +64,10 @@ const imageLoadingSteps = [
 ];
 
 const homeDraftStorageKey = "siteforge_home_draft";
+
+function scopedHomeDraftStorageKey() {
+  return `${homeDraftStorageKey}:${getProjectCacheUserId()}`;
+}
 
 function projectNameFromPrompt(prompt) {
   const cleaned = prompt.trim().replace(/\s+/g, " ");
@@ -143,7 +147,7 @@ function compileBusinessPrompt(brief, extraPrompt = "") {
 
 function readHomeDraft() {
   try {
-    const draft = JSON.parse(localStorage.getItem(homeDraftStorageKey) || "{}");
+    const draft = JSON.parse(localStorage.getItem(scopedHomeDraftStorageKey()) || "{}");
     return {
       prompt: typeof draft.prompt === "string" ? draft.prompt : "",
       mode: draft.mode === "images" ? "images" : "website",
@@ -192,7 +196,7 @@ export default function HomePage() {
   const canGenerate = Boolean(effectivePrompt);
 
   useEffect(() => {
-    localStorage.setItem(homeDraftStorageKey, JSON.stringify({ prompt, businessBrief, mode }));
+    localStorage.setItem(scopedHomeDraftStorageKey(), JSON.stringify({ prompt, businessBrief, mode }));
   }, [prompt, businessBrief, mode]);
 
   useEffect(() => {
@@ -275,6 +279,7 @@ export default function HomePage() {
         theme: generated?.theme || {}
       });
 
+      localStorage.removeItem(scopedHomeDraftStorageKey());
       localStorage.removeItem(homeDraftStorageKey);
       writeCachedProject(data.project);
       navigate(`/editor/${data.project.id}`);

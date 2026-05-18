@@ -873,7 +873,7 @@ export async function generateWebsite(prompt, options = {}) {
     : undefined;
 
   if (!process.env.GEMINI_API_KEY) {
-    throw geminiUnavailableError("Gemini API key is missing. Add GEMINI_API_KEY to generate real website content.");
+    return withImages(fallbackWebsiteDraft(prompt), prompt, imageOptions);
   }
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -888,14 +888,14 @@ export async function generateWebsite(prompt, options = {}) {
         modelName
       );
       const text = result.response.text();
-      return withImages(normalizeWebsite(parseJson(text), prompt), imageOptions);
+      return withImages(normalizeWebsite(parseJson(text), prompt), prompt, imageOptions);
     } catch (error) {
       errors.push(`${modelName}: ${error.message}`);
     }
   }
 
   console.warn("Gemini generation failed.", errors);
-  throw geminiUnavailableError("Gemini could not generate the website right now. Please try again.", errors);
+  return withImages(fallbackWebsiteDraft(prompt), prompt, imageOptions);
 }
 
 export async function assistWebsiteEdit(project, instruction) {

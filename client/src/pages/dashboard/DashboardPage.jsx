@@ -203,7 +203,7 @@ function sortProjectsByRecent(projects = []) {
 export default function DashboardPage() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState(() => sortProjectsByRecent(getProjectListSnapshot()));
-  const [loading, setLoading] = useState(() => !hasCompleteProjectListSnapshot());
+  const [loading, setLoading] = useState(() => !getProjectListSnapshot().length && !hasCompleteProjectListSnapshot());
   const [error, setError] = useState("");
   const [deletingId, setDeletingId] = useState(null);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -222,7 +222,7 @@ export default function DashboardPage() {
     });
     const cachedProjects = getProjectListSnapshot();
 
-    if (cachedProjects.length && hasCompleteProjectListSnapshot()) {
+    if (cachedProjects.length) {
       setProjects(sortProjectsByRecent(cachedProjects));
       setLoading(false);
     }

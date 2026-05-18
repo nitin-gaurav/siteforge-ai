@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
-import { setProjectCacheUser } from "../services/projectCache.js";
+import { fetchProjects, setProjectCacheUser } from "../services/projectCache.js";
 import { supabase } from "../services/supabaseClient.js";
+
+function warmProjectCache(session) {
+  if (!session?.user?.id) return;
+  fetchProjects().catch(() => {
+    // The protected pages still handle project load errors in context.
+  });
+}
 
 export function useAuth() {
   const [session, setSession] = useState(null);
@@ -14,6 +21,7 @@ export function useAuth() {
       .then(({ data }) => {
         if (!mounted) return;
         setProjectCacheUser(data.session?.user?.id);
+        warmProjectCache(data.session);
         setSession(data.session);
       })
       .catch(() => {
@@ -30,6 +38,7 @@ export function useAuth() {
       data: { subscription }
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       setProjectCacheUser(nextSession?.user?.id);
+      warmProjectCache(nextSession);
       setSession(nextSession);
       setLoading(false);
     });

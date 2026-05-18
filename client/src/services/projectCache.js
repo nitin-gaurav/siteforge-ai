@@ -267,7 +267,7 @@ export async function fetchProjectDetail(id, { force = false } = {}) {
 }
 
 export async function fetchProjects({ force = false } = {}) {
-  if (pendingProjectsRequest && !force) return pendingProjectsRequest;
+  if (pendingProjectsRequest) return pendingProjectsRequest;
 
   const requestUserId = activeProjectCacheUserId;
   pendingProjectsRequest = api

@@ -152,22 +152,6 @@ textarea {
     z-index: 2;
   }
 
-  .auth-mode-signin .auth-panel-left {
-    transform: translateX(0);
-  }
-
-  .auth-mode-signin .auth-panel-right {
-    transform: translateX(0);
-  }
-
-  .auth-mode-signup .auth-panel-left {
-    transform: translateX(100%);
-  }
-
-  .auth-mode-signup .auth-panel-right {
-    transform: translateX(-100%);
-    box-shadow: 24px 0 70px rgba(58, 48, 112, 0.16);
-  }
 }
 
 @media (max-width: 640px) {
@@ -199,10 +183,6 @@ textarea {
 .auth-stagger:nth-child(1) { animation-delay: 0.14s; }
 .auth-stagger:nth-child(2) { animation-delay: 0.22s; }
 .auth-stagger:nth-child(3) { animation-delay: 0.30s; }
-
-.auth-mode-swap {
-  animation: authModeSwap 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
 
 .auth-form-row {
   animation: authLiftIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
@@ -410,23 +390,18 @@ textarea {
 }
 
 @keyframes authPanelLeftIn {
-  from { opacity: 0; filter: blur(4px); }
-  to { opacity: 1; filter: blur(0); }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes authPanelRightIn {
-  from { opacity: 0; filter: blur(4px); }
-  to { opacity: 1; filter: blur(0); }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes authLiftIn {
   from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes authModeSwap {
-  from { opacity: 0; transform: translateY(8px) scale(0.985); filter: blur(3px); }
-  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
 }
 
 @keyframes authAlertIn {
@@ -543,7 +518,6 @@ textarea {
   .auth-panel-left,
   .auth-panel-right,
   .auth-stagger,
-  .auth-mode-swap,
   .auth-form-row,
   .auth-alert-in,
   .auth-brand-shimmer,

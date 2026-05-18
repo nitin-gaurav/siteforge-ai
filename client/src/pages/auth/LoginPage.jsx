@@ -74,9 +74,7 @@ export default function LoginPage() {
 
       <div className="relative mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-3 py-4 sm:px-6 sm:py-8">
         <section
-          className={`auth-shell ${
-            isSignin ? "auth-mode-signin" : "auth-mode-signup"
-          } grid w-full max-w-6xl overflow-hidden rounded-[22px] bg-white shadow-[0_26px_76px_rgba(58,48,112,0.14)] sm:rounded-[28px] lg:min-h-[600px] lg:grid-cols-2`}
+          className="auth-shell grid w-full max-w-6xl overflow-hidden rounded-[22px] bg-white shadow-[0_26px_76px_rgba(58,48,112,0.14)] sm:rounded-[28px] lg:min-h-[600px] lg:grid-cols-2"
         >
           <div className="auth-panel-left flex flex-col justify-center px-5 py-7 sm:px-10 lg:px-16">
             <div className="auth-stagger mb-5 flex items-center justify-center gap-3 sm:mb-6">
@@ -115,7 +113,7 @@ export default function LoginPage() {
                 ))}
               </div>
 
-              <header key={mode} className="auth-mode-swap text-center">
+              <header className="text-center">
                 <h1 className="font-display text-2xl font-black tracking-normal sm:text-3xl">
                   {isSignin ? "Welcome back" : "Create account"}
                 </h1>

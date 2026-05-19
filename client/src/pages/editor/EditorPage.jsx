@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Download, Home, LayoutDashboard, Maximize2, Minimize2, Palette, Save, ScrollText, Sparkles, Wand2 } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import AiWebsiteAssistant from "../../components/editor/AiWebsiteAssistant.jsx";
 import PromptPanel from "../../components/editor/PromptPanel.jsx";
 import SectionList from "../../components/editor/SectionList.jsx";
@@ -80,6 +80,7 @@ function hasLocalFallbackImages(sections = []) {
 
 export default function EditorPage() {
   const { projectId } = useParams();
+  const navigate = useNavigate();
   const [error, setError] = useState("");
   const [activePanel, setActivePanel] = useState("build");
   const [sidebarExpanded, setSidebarExpanded] = useState(false);
@@ -117,6 +118,12 @@ export default function EditorPage() {
       })
       .catch((requestError) => {
         if (!cancelled) {
+          if (requestError.status === 404) {
+            store.resetProject();
+            navigate("/dashboard", { replace: true });
+            return;
+          }
+
           setError(requestError.message);
           store.setStatus("idle");
         }
@@ -125,7 +132,7 @@ export default function EditorPage() {
     return () => {
       cancelled = true;
     };
-  }, [projectId]);
+  }, [navigate, projectId]);
 
   useEffect(() => {
     const activeProjectId = store.projectId || projectId;

@@ -67,6 +67,12 @@ function summarizeProject(project) {
   };
 }
 
+function notFoundError() {
+  const error = new Error("Project not found");
+  error.status = 404;
+  return error;
+}
+
 export async function listProjects(req, res) {
   const rawLimit = Number.parseInt(req.query.limit, 10);
   const limit = Number.isFinite(rawLimit) ? Math.min(Math.max(rawLimit, 1), 100) : null;
@@ -97,12 +103,10 @@ export async function getProject(req, res) {
     .select("*")
     .eq("id", req.params.id)
     .eq("user_id", req.user.id)
-    .single();
+    .maybeSingle();
 
-  if (error) {
-    error.status = error.code === "PGRST116" ? 404 : 500;
-    throw error;
-  }
+  if (error) throw error;
+  if (!data) throw notFoundError();
 
   res.json({ project: data });
 }
@@ -127,9 +131,11 @@ export async function updateProject(req, res) {
     .eq("id", req.params.id)
     .eq("user_id", req.user.id)
     .select("*")
-    .single();
+    .maybeSingle();
 
   if (error) throw error;
+  if (!data) throw notFoundError();
+
   res.json({ project: data });
 }
 

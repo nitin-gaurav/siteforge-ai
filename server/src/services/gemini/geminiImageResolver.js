@@ -146,7 +146,7 @@ async function resolveUnsplashImage(query, index) {
   }
 
   const image = await searchUnsplashImage(query, index);
-  const resolvedImage = image?.url ? image : await resolveGeminiImage(query, index);
+  const resolvedImage = image?.url ? image : fallbackWebsiteImage(query, index);
   unsplashImageCache.set(cacheKey, resolvedImage);
   return resolvedImage;
 }

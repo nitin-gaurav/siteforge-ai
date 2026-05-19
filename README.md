@@ -10,8 +10,8 @@
 - **API:** [siteforge-ai-server.onrender.com](https://siteforge-ai-server.onrender.com)
 
 **Demo credentials:**
-- Email: `demo@siteforge.ai`
-- Password: `demo123456`
+- Email: 'me@gmail.com'
+- Password: '123456'
 
 ---
 

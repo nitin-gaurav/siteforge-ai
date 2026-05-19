@@ -86,8 +86,6 @@ export async function generateGeminiImage(query, index = 0) {
     return imageCache.get(cacheKey);
   }
 
-  const errors = [];
-
   for (const modelName of imageModelCandidates()) {
     const url = new URL(`${GEMINI_API_URL}/${modelName}:generateContent`);
     url.searchParams.set("key", process.env.GEMINI_API_KEY);
@@ -123,7 +121,6 @@ export async function generateGeminiImage(query, index = 0) {
       const payload = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        errors.push(`${modelName}: ${payload?.error?.message || response.statusText}`);
         continue;
       }
 
@@ -132,7 +129,6 @@ export async function generateGeminiImage(query, index = 0) {
       const mimeType = imagePart?.inlineData?.mimeType || imagePart?.inline_data?.mime_type || "image/png";
 
       if (!imageData) {
-        errors.push(`${modelName}: no image returned`);
         continue;
       }
 
@@ -146,13 +142,11 @@ export async function generateGeminiImage(query, index = 0) {
 
       imageCache.set(cacheKey, image);
       return image;
-    } catch (error) {
-      errors.push(`${modelName}: ${error.name === "AbortError" ? "request timed out" : error.message}`);
+    } catch {
     } finally {
       clearTimeout(timeout);
     }
   }
 
-  console.warn("Gemini image generation failed. Falling back to stock image search.", errors);
   return null;
 }

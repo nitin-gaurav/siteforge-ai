@@ -183,7 +183,11 @@ export default function AppShell({ children }) {
         writeRecentProjectCache(nextRecentProjects, cacheUserId);
       })
       .catch(() => {
-        if (!cancelled && !recentProjects.length) setRecentProjects(readRecentProjectCache(cacheUserId));
+        if (!cancelled) {
+          setRecentProjects((currentProjects) => (
+            currentProjects.length ? currentProjects : readRecentProjectCache(cacheUserId)
+          ));
+        }
       })
       .finally(() => {
         if (!cancelled) setRecentLoading(false);
@@ -218,9 +222,7 @@ export default function AppShell({ children }) {
     localStorage.removeItem(recentProjectCacheKey);
     window.setTimeout(() => navigate("/login", { replace: true }), 120);
 
-    supabase.auth.signOut().catch((error) => {
-      console.error("Sign out failed", error);
-    });
+    supabase.auth.signOut().catch(() => {});
   }
 
   return (

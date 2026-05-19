@@ -76,8 +76,15 @@ app.use("/api/assistant", assistantRoutes);
 app.use(errorHandler);
 
 if (process.env.VERCEL !== "1") {
-  app.listen(port, () => {
-    console.log(`API listening on http://localhost:${port}`);
+  const server = app.listen(port);
+
+  server.on("error", (error) => {
+    if (error.code === "EADDRINUSE") {
+      process.stderr.write(`Port ${port} is already in use. Stop the existing server or set PORT to another value.\n`);
+      process.exit(1);
+    }
+
+    throw error;
   });
 }
 

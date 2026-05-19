@@ -1,10 +1,9 @@
-import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import LoginPage from "./pages/auth/LoginPage.jsx";
-import HomePage from "./pages/home/HomePage.jsx";
 import DashboardPage from "./pages/dashboard/DashboardPage.jsx";
 import EditorPage from "./pages/editor/EditorPage.jsx";
 import { useAuth } from "./hooks/useAuth.js";
+import LoginPage from "./pages/auth/LoginPage.jsx";
+import HomePage from "./pages/home/HomePage.jsx";
 
 function ProtectedRoute({ children }) {
   const { session, loading } = useAuth();

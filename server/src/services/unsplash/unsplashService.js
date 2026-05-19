@@ -1,4 +1,5 @@
 const UNSPLASH_API_URL = "https://api.unsplash.com/search/photos";
+const UNSPLASH_RESULTS_PER_PAGE = 30;
 const imageCache = new Map();
 
 let cachedFetch;
@@ -30,21 +31,22 @@ export async function searchUnsplashImage(query, index = 0) {
 
   const fetchFn = await resolveFetch();
   const url = new URL(UNSPLASH_API_URL);
+  const page = Math.floor(index / UNSPLASH_RESULTS_PER_PAGE) + 1;
   url.searchParams.set("query", normalizedQuery);
   url.searchParams.set("orientation", "landscape");
-  url.searchParams.set("per_page", "12");
+  url.searchParams.set("per_page", String(UNSPLASH_RESULTS_PER_PAGE));
+  url.searchParams.set("page", String(page));
   url.searchParams.set("client_id", accessKey);
 
   try {
     const response = await fetchFn(url);
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      console.warn("Unsplash image search failed.", payload?.errors || payload?.error || response.statusText);
       return null;
     }
 
     const results = Array.isArray(payload.results) ? payload.results : [];
-    const photo = results[index % Math.max(results.length, 1)];
+    const photo = results[index % UNSPLASH_RESULTS_PER_PAGE] || results[0];
     if (!photo?.urls) return null;
 
     const image = {
@@ -57,8 +59,7 @@ export async function searchUnsplashImage(query, index = 0) {
 
     imageCache.set(cacheKey, image);
     return image;
-  } catch (error) {
-    console.warn("Unsplash image search crashed.", error.message);
+  } catch {
     return null;
   }
 }

@@ -1,4 +1,3 @@
-import React from "react";
 import Textarea from "../ui/Textarea.jsx";
 
 export default function PromptPanel({ prompt, onPromptChange }) {

@@ -131,8 +131,7 @@ async function resolveGeminiImage(query, index) {
       imageCache.set(cacheKey, image);
       return image;
     }
-  } catch (error) {
-    console.warn("Gemini image generation crashed. Falling back to local placeholder.", error.message);
+  } catch {
   }
 
   const image = fallbackImage(query, index);
@@ -147,7 +146,7 @@ async function resolveUnsplashImage(query, index) {
   }
 
   const image = await searchUnsplashImage(query, index);
-  const resolvedImage = image?.url ? image : fallbackWebsiteImage(query, index);
+  const resolvedImage = image?.url ? image : await resolveGeminiImage(query, index);
   unsplashImageCache.set(cacheKey, resolvedImage);
   return resolvedImage;
 }
@@ -159,7 +158,7 @@ function shouldUseGeminiImage(query, generatedCount, budgets) {
 
 async function resolveBudgetedImage(query, index, generatedCount, budgets) {
   if (!shouldUseGeminiImage(query, generatedCount, budgets)) {
-    return fallbackImage(query, index);
+    return isLogoQuery(query) ? fallbackLogoImage(query, index) : resolveUnsplashImage(query, index);
   }
 
   generatedCount.count += 1;

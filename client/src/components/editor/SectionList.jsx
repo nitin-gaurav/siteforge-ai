@@ -1,6 +1,5 @@
-import React from "react";
-import { ChevronDown, Plus, Trash2, GripVertical, Image, RefreshCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Plus, Trash2, GripVertical, Image, RefreshCcw } from "lucide-react";
 import Input from "../ui/Input.jsx";
 import Textarea from "../ui/Textarea.jsx";
 
@@ -103,7 +102,6 @@ export default function SectionList({ sections, onAdd, onRemove, onUpdate, onReg
                     : "border-line bg-white shadow-sm hover:border-accent/20 hover:bg-panel"
                 }`}
               >
-                {/* Section header */}
                 <div className="flex items-center gap-1.5 px-2.5 py-2">
                   <span className="cursor-grab text-muted/30 active:cursor-grabbing" title="Drag to reorder">
                     <GripVertical className="h-4 w-4" />
@@ -139,7 +137,6 @@ export default function SectionList({ sections, onAdd, onRemove, onUpdate, onReg
                   </button>
                 </div>
 
-                {/* Expandable content */}
                 <div className={`grid transition-[grid-template-rows] duration-300 ease-spring ${isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
                   <div className="min-h-0 overflow-hidden">
                     <div className="grid gap-3 border-t border-line/70 p-3">
@@ -163,7 +160,6 @@ export default function SectionList({ sections, onAdd, onRemove, onUpdate, onReg
                         onChange={(e) => onUpdate(section.id, { body: e.target.value })}
                       />
 
-                      {/* Items */}
                       {section.items?.length ? (
                         <div className="grid gap-3 rounded-xl bg-panel p-3">
                           <p className="text-[10px] font-bold uppercase tracking-widest text-muted">Cards / ranking items</p>
@@ -198,7 +194,6 @@ export default function SectionList({ sections, onAdd, onRemove, onUpdate, onReg
                         </div>
                       ) : null}
 
-                      {/* Image */}
                       <div className="grid gap-3 rounded-xl bg-panel p-3">
                         <div className="flex items-center gap-1.5">
                           <Image className="h-3.5 w-3.5 text-muted" />

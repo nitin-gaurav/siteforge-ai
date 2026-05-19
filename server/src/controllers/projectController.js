@@ -1,15 +1,24 @@
 import { supabaseAdmin } from "../services/supabaseAdmin.js";
 
-function serializeProject(body, userId) {
-  const sections = Array.isArray(body.sections) ? body.sections : [];
+function buildProjectMeta(sections) {
   const previewImage = sections.find((section) => section?.image?.url)?.image;
-  const theme = body.theme && typeof body.theme === "object" ? body.theme : {};
-  theme._meta = {
+
+  return {
     section_count: sections.length,
     preview_image_url: previewImage?.url || "",
     preview_image_alt: previewImage?.alt || "",
-    section_types: sections.map(s => ({ type: s.type || "", title: s.title || "" }))
+    section_types: sections.map((section) => ({ type: section.type || "", title: section.title || "" }))
   };
+}
+
+function normalizeTheme(theme) {
+  return theme && typeof theme === "object" ? { ...theme } : {};
+}
+
+function serializeProject(body, userId) {
+  const sections = Array.isArray(body.sections) ? body.sections : [];
+  const theme = normalizeTheme(body.theme);
+  theme._meta = buildProjectMeta(sections);
 
   return {
     user_id: userId,
@@ -25,28 +34,16 @@ function serializeProjectUpdate(body) {
 
   if (Object.prototype.hasOwnProperty.call(body, "name")) project.name = body.name || "Untitled website";
   if (Object.prototype.hasOwnProperty.call(body, "prompt")) project.prompt = body.prompt || "";
-  
-  // We cannot reliably generate full _meta here without existing sections,
-  // so we ONLY generate it if `sections` are being updated.
+
   if (Object.prototype.hasOwnProperty.call(body, "sections")) {
     const sections = Array.isArray(body.sections) ? body.sections : [];
     project.sections = sections;
-    
-    const previewImage = sections.find((section) => section?.image?.url)?.image;
-    const theme = body.theme && typeof body.theme === "object" ? body.theme : {};
-    
-    // We assume frontend handles preserving theme properties, we just augment it
-    theme._meta = {
-      section_count: sections.length,
-      preview_image_url: previewImage?.url || "",
-      preview_image_alt: previewImage?.alt || "",
-      section_types: sections.map(s => ({ type: s.type || "", title: s.title || "" }))
-    };
+
+    const theme = normalizeTheme(body.theme);
+    theme._meta = buildProjectMeta(sections);
     project.theme = theme;
   } else if (Object.prototype.hasOwnProperty.call(body, "theme")) {
-    // If frontend sends a theme update without sections, we accept it.
-    // The frontend should ensure it doesn't drop `_meta`, but we can't fetch it here safely.
-    project.theme = body.theme && typeof body.theme === "object" ? body.theme : {};
+    project.theme = normalizeTheme(body.theme);
   }
 
   return project;

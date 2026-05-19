@@ -1,5 +1,3 @@
-import React from "react";
-
 const colorFields = [
   { key: "primary", label: "Primary" },
   { key: "background", label: "Canvas" },

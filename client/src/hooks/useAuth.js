@@ -18,9 +18,24 @@ export function useAuth() {
 
     supabase.auth
       .getSession()
-      .then(({ data }) => {
+      .then(async ({ data }) => {
         if (!mounted) return;
-        setProjectCacheUser(data.session?.user?.id);
+        if (!data.session) {
+          setProjectCacheUser(null);
+          setSession(null);
+          return;
+        }
+
+        const { error } = await supabase.auth.getUser();
+        if (!mounted) return;
+        if (error) {
+          await supabase.auth.signOut().catch(() => {});
+          setProjectCacheUser(null);
+          setSession(null);
+          return;
+        }
+
+        setProjectCacheUser(data.session.user?.id);
         warmProjectCache(data.session);
         setSession(data.session);
       })

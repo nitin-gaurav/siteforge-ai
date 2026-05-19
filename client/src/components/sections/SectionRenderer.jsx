@@ -1,6 +1,5 @@
-import React from "react";
 import { ArrowRight, BarChart3, Calendar, Coffee, Download, Mail, Trophy, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
 function actionKind(section) {
@@ -199,7 +198,7 @@ function SectionImage({ className, image }) {
   const displayImage = image?.url || !image?.query ? image : sectionPlaceholderImage(image);
   const [failed, setFailed] = useState(false);
   const [shouldLoad, setShouldLoad] = useState(false);
-  const containerRef = React.useRef(null);
+  const containerRef = useRef(null);
   const isFallbackPlaceholder = displayImage?.credit?.startsWith("Local fallback");
   const isInlineImage = displayImage?.url?.startsWith("data:image/");
 

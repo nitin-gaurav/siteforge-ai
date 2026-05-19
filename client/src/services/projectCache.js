@@ -267,6 +267,7 @@ export async function fetchProjectDetail(id, { force = false } = {}) {
 }
 
 export async function fetchProjects({ force = false } = {}) {
+  if (!force && hasCompleteProjectListSnapshot()) return getProjectListSnapshot();
   if (pendingProjectsRequest) return pendingProjectsRequest;
 
   const requestUserId = activeProjectCacheUserId;

@@ -42,18 +42,35 @@ const REQUEST_TIMEOUT_MS = 120000;
 
 async function authHeaders() {
   const {
-    data: { session }
+    data: { session },
+    error
   } = await supabase.auth.getSession();
+
+  if (error) throw error;
+
   const expiresAt = session?.expires_at ? session.expires_at * 1000 : 0;
   const shouldRefresh = expiresAt && expiresAt - Date.now() < 60000;
-  const activeSession = shouldRefresh
-    ? (await supabase.auth.refreshSession()).data.session || session
-    : session;
+  const refreshed = shouldRefresh ? await supabase.auth.refreshSession() : null;
+  const activeSession = refreshed?.data.session || session;
+
+  if (refreshed?.error) throw refreshed.error;
+  if (!activeSession?.access_token) {
+    const authError = new Error("Please log in again to continue.");
+    authError.status = 401;
+    throw authError;
+  }
 
   return {
     "Content-Type": "application/json",
-    ...(activeSession?.access_token ? { Authorization: `Bearer ${activeSession.access_token}` } : {})
+    Authorization: `Bearer ${activeSession.access_token}`
   };
+}
+
+async function handleUnauthorized() {
+  await supabase.auth.signOut().catch(() => {});
+  if (typeof window !== "undefined" && window.location.pathname !== "/login") {
+    window.location.assign("/login");
+  }
 }
 
 async function request(path, options = {}) {
@@ -81,9 +98,20 @@ async function request(path, options = {}) {
     }
   };
 
-  let response = await makeRequest();
+  let response;
+  try {
+    response = await makeRequest();
+  } catch (error) {
+    if (error.status === 401) {
+      await handleUnauthorized();
+    }
+    throw error;
+  }
   if (response.status === 401) {
-    await supabase.auth.refreshSession();
+    const refreshed = await supabase.auth.refreshSession();
+    if (refreshed.error || !refreshed.data.session?.access_token) {
+      await handleUnauthorized();
+    }
     response = await makeRequest();
   }
 
@@ -91,6 +119,9 @@ async function request(path, options = {}) {
   if (!response.ok) {
     const error = new Error(payload.error || "Request failed");
     error.status = response.status;
+    if (response.status === 401) {
+      await handleUnauthorized();
+    }
     throw error;
   }
   return payload;

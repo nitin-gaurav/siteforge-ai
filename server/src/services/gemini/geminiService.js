@@ -859,14 +859,6 @@ function modelCandidates() {
   ].filter(Boolean))];
 }
 
-function geminiUnavailableError(message, details = []) {
-  const error = new Error(message);
-  error.status = 503;
-  error.code = "GEMINI_UNAVAILABLE";
-  error.details = details.slice(0, 3).join(" | ");
-  return error;
-}
-
 export async function generateWebsite(prompt, options = {}) {
   const imageOptions = options.includeImages === false
     ? { skipImageResolution: true }
@@ -877,7 +869,6 @@ export async function generateWebsite(prompt, options = {}) {
   }
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const errors = [];
 
   for (const modelName of modelCandidates()) {
     try {
@@ -889,12 +880,10 @@ export async function generateWebsite(prompt, options = {}) {
       );
       const text = result.response.text();
       return withImages(normalizeWebsite(parseJson(text), prompt), prompt, imageOptions);
-    } catch (error) {
-      errors.push(`${modelName}: ${error.message}`);
+    } catch {
     }
   }
 
-  console.warn("Gemini generation failed.", errors);
   return withImages(fallbackWebsiteDraft(prompt), prompt, imageOptions);
 }
 
@@ -910,7 +899,6 @@ export async function assistWebsiteEdit(project, instruction) {
   }
 
   const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-  const errors = [];
 
   for (const modelName of modelCandidates()) {
     try {
@@ -922,11 +910,9 @@ export async function assistWebsiteEdit(project, instruction) {
       );
       const text = result.response.text();
       return normalizeAssistantResponse(parseJson(text), project, trimmedInstruction);
-    } catch (error) {
-      errors.push(`${modelName}: ${error.message}`);
+    } catch {
     }
   }
 
-  console.warn("Gemini assistant edit failed. Falling back to local assistant.", errors);
   return assistantFallback(project, trimmedInstruction);
 }

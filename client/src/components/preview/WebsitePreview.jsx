@@ -1,6 +1,5 @@
-import React from "react";
-import { Monitor, Smartphone, Tablet } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Monitor, Smartphone, Tablet } from "lucide-react";
 import SectionRenderer from "../sections/SectionRenderer.jsx";
 
 const viewports = {

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { ArrowRight, Clock, FolderOpen, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { Clock, FolderOpen, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import AppShell from "../../components/ui/AppShell.jsx";
 import Button from "../../components/ui/Button.jsx";
@@ -276,8 +276,9 @@ export default function DashboardPage() {
       const data = await api.updateProject(project.id, {
         name
       });
-      setProjects((currentProjects) => sortProjectsByRecent(currentProjects.map((item) => (item.id === project.id ? data.project : item))));
-      writeCachedProjects(sortProjectsByRecent(projects.map((item) => (item.id === project.id ? data.project : item))));
+      const nextProjects = sortProjectsByRecent(previousProjects.map((item) => (item.id === project.id ? data.project : item)));
+      setProjects(nextProjects);
+      writeCachedProjects(nextProjects);
       writeCachedProject(data.project);
     } catch (requestError) {
       setProjects(previousProjects);

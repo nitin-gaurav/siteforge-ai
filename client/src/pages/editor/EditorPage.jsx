@@ -140,7 +140,6 @@ export default function EditorPage() {
 
     api
       .generateImages(store.prompt || store.name || "website visual", store.sections, {
-        websiteImageBudget: 3,
         logoImageBudget: 3,
         graphicsOnly: false
       })
@@ -157,9 +156,7 @@ export default function EditorPage() {
         });
         writeCachedProject(data.project);
       })
-      .catch((requestError) => {
-        console.warn("Image hydration failed", requestError);
-      });
+      .catch(() => {});
 
     return () => {
       cancelled = true;
